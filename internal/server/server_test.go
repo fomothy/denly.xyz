@@ -12,7 +12,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fomothy/denly.xyz/internal/auth"
 	"github.com/fomothy/denly.xyz/internal/config"
+	"github.com/fomothy/denly.xyz/internal/drop"
+	"github.com/fomothy/denly.xyz/internal/identity"
+	"github.com/fomothy/denly.xyz/internal/nostr"
+	"github.com/fomothy/denly.xyz/internal/profile"
 	"github.com/fomothy/denly.xyz/internal/store"
 )
 
@@ -29,12 +34,28 @@ func newTestServer(t *testing.T) *Server {
 	cfg := config.Config{DataDir: dir, Addr: "127.0.0.1:0"}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 
-	s, err := New(cfg, st, log)
+	sk, err := nostr.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("GeneratePrivateKey: %v", err)
+	}
+	owner := sk.PublicKey()
+
+	s, err := New(cfg, st, log, Deps{
+		Owner:      &owner,
+		Auth:       auth.New(testAdminToken, owner),
+		Profile:    profile.New(st),
+		Drops:      drop.New(st),
+		Identities: identity.NewResolver(),
+	})
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
+	s.ownerKey = sk
 	return s
 }
+
+// testAdminToken is the loopback credential the API tests authenticate with.
+const testAdminToken = "test-admin-token"
 
 func TestIndexRenders(t *testing.T) {
 	s := newTestServer(t)

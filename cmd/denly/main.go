@@ -12,9 +12,16 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/fomothy/denly.xyz/internal/auth"
 	"github.com/fomothy/denly.xyz/internal/buildinfo"
 	"github.com/fomothy/denly.xyz/internal/config"
+	"github.com/fomothy/denly.xyz/internal/drop"
+	"github.com/fomothy/denly.xyz/internal/identity"
+	"github.com/fomothy/denly.xyz/internal/keyring"
+	"github.com/fomothy/denly.xyz/internal/nostr"
+	"github.com/fomothy/denly.xyz/internal/profile"
 	"github.com/fomothy/denly.xyz/internal/server"
 	"github.com/fomothy/denly.xyz/internal/store"
 )
@@ -25,7 +32,12 @@ Usage:
   denly <command> [flags]
 
 Commands:
+  init       Create this instance's identity key
   serve      Run the denly server
+  whoami     Print this instance's identity
+  drop       Encrypt a file locally and upload the ciphertext
+  backup     Write an encrypted archive of the data directory
+  restore    Restore an encrypted archive
   version    Print version information
   help       Show this message
 
@@ -56,8 +68,18 @@ func run(args []string) error {
 	}
 
 	switch args[0] {
+	case "init":
+		return runInit(args[1:])
 	case "serve":
 		return runServe(args[1:])
+	case "whoami":
+		return runWhoami(args[1:])
+	case "drop":
+		return runDrop(args[1:])
+	case "backup":
+		return runBackup(args[1:])
+	case "restore":
+		return runRestore(args[1:])
 	case "version", "--version", "-v":
 		return runVersion(args[1:])
 	case "help", "--help", "-h":
@@ -106,10 +128,45 @@ func runServe(args []string) error {
 	}
 	defer func() { _ = st.Close() }() // checked explicitly below; this covers early returns
 
-	srv, err := server.New(cfg, st, log)
+	// The identity is optional at boot. `denly serve` before `denly init` is a
+	// legitimate state — the instance runs, serves nothing identity-shaped, and
+	// says so — rather than refusing to start.
+	var owner *nostr.PublicKey
+	if keyring.Exists(cfg.DataDir) {
+		k, err := keyring.Load(cfg.DataDir)
+		if err != nil {
+			return err
+		}
+		pk := k.PublicKey()
+		owner = &pk
+		log.Info("identity loaded", "pubkey", pk.Hex())
+	} else {
+		log.Warn("no identity yet; run `denly init` to create one")
+	}
+
+	token, err := auth.LoadOrCreateToken(cfg.DataDir)
 	if err != nil {
 		return err
 	}
+	var ownerKey nostr.PublicKey
+	if owner != nil {
+		ownerKey = *owner
+	}
+
+	srv, err := server.New(cfg, st, log, server.Deps{
+		Owner:      owner,
+		Auth:       auth.New(token, ownerKey),
+		Profile:    profile.New(st),
+		Drops:      drop.New(st),
+		Identities: identity.NewResolver(),
+	})
+	if err != nil {
+		return err
+	}
+
+	// Retention is a promise, so something has to enforce it on a schedule
+	// rather than only when a request happens to arrive.
+	go runSweeper(ctx, drop.New(st), log)
 
 	if err := srv.Serve(ctx); err != nil {
 		return err
@@ -156,4 +213,42 @@ func newLogger(asJSON, verbose bool) *slog.Logger {
 		return slog.New(slog.NewJSONHandler(os.Stderr, opts))
 	}
 	return slog.New(slog.NewTextHandler(os.Stderr, opts))
+}
+
+// runSweeper deletes expired drops, spent receive requests, and access-log rows
+// past their retention window. It runs on a timer because "logs rot after 24h"
+// has to be true on an idle instance too, not only on a busy one.
+func runSweeper(ctx context.Context, drops *drop.Service, log *slog.Logger) {
+	const interval = 15 * time.Minute
+
+	sweep := func() {
+		if n, err := drops.SweepExpired(ctx); err != nil {
+			log.Error("sweeping expired drops", "error", err)
+		} else if n > 0 {
+			log.Info("deleted expired drops", "count", n)
+		}
+		if n, err := drops.SweepAccessLog(ctx); err != nil {
+			log.Error("sweeping access log", "error", err)
+		} else if n > 0 {
+			log.Info("rotated access log entries", "count", n)
+		}
+		if n, err := drops.SweepRequests(ctx); err != nil {
+			log.Error("sweeping receive requests", "error", err)
+		} else if n > 0 {
+			log.Info("deleted expired receive requests", "count", n)
+		}
+	}
+
+	sweep() // once at boot, so a long downtime does not leave stale data served
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			sweep()
+		}
+	}
 }

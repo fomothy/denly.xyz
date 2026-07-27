@@ -12,8 +12,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/fomothy/denly.xyz/internal/auth"
 	"github.com/fomothy/denly.xyz/internal/buildinfo"
 	"github.com/fomothy/denly.xyz/internal/config"
+	"github.com/fomothy/denly.xyz/internal/drop"
+	"github.com/fomothy/denly.xyz/internal/identity"
+	"github.com/fomothy/denly.xyz/internal/nostr"
+	"github.com/fomothy/denly.xyz/internal/profile"
 	"github.com/fomothy/denly.xyz/internal/store"
 	"github.com/fomothy/denly.xyz/web"
 )
@@ -27,12 +32,36 @@ type Server struct {
 	static    fs.FS
 	started   time.Time
 
+	// owner is nil until `denly init` has run. Endpoints that need an identity
+	// check for that rather than assuming one exists.
+	owner      *nostr.PublicKey
+	nip05Names []string
+
+	// ownerKey is set only by tests that need to sign as the owner. Production
+	// code never holds the secret key in the server.
+	ownerKey *nostr.PrivateKey
+
+	auth       *auth.Authenticator
+	profile    *profile.Service
+	drops      *drop.Service
+	identities *identity.Resolver
+
 	http *http.Server
+}
+
+// Deps are the collaborators a Server needs beyond its configuration.
+type Deps struct {
+	Owner      *nostr.PublicKey
+	NIP05Names []string
+	Auth       *auth.Authenticator
+	Profile    *profile.Service
+	Drops      *drop.Service
+	Identities *identity.Resolver
 }
 
 // New builds a Server. Template parsing and asset mounting happen here so that
 // a malformed build fails at startup rather than on a user's first request.
-func New(cfg config.Config, st *store.Store, log *slog.Logger) (*Server, error) {
+func New(cfg config.Config, st *store.Store, log *slog.Logger, deps Deps) (*Server, error) {
 	tmpl, err := web.Templates()
 	if err != nil {
 		return nil, fmt.Errorf("parsing templates: %w", err)
@@ -43,12 +72,18 @@ func New(cfg config.Config, st *store.Store, log *slog.Logger) (*Server, error) 
 	}
 
 	s := &Server{
-		cfg:       cfg,
-		store:     st,
-		log:       log,
-		templates: tmpl,
-		static:    static,
-		started:   time.Now(),
+		cfg:        cfg,
+		store:      st,
+		log:        log,
+		templates:  tmpl,
+		static:     static,
+		started:    time.Now(),
+		owner:      deps.Owner,
+		nip05Names: deps.NIP05Names,
+		auth:       deps.Auth,
+		profile:    deps.Profile,
+		drops:      deps.Drops,
+		identities: deps.Identities,
 	}
 
 	s.http = &http.Server{

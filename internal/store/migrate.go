@@ -29,6 +29,95 @@ var migrations = []migration{
 			) STRICT;
 		`,
 	},
+	{
+		version: 2,
+		name:    "profile_identity_drops",
+		sql: `
+			-- The presence page. A single row; id is pinned to 1 so there can
+			-- never be a second profile to disagree with the first.
+			CREATE TABLE profile (
+				id          INTEGER PRIMARY KEY CHECK (id = 1),
+				display_name TEXT NOT NULL DEFAULT '',
+				bio          TEXT NOT NULL DEFAULT '',
+				updated_at   TEXT NOT NULL
+			) STRICT;
+
+			CREATE TABLE links (
+				id         INTEGER PRIMARY KEY AUTOINCREMENT,
+				label      TEXT NOT NULL,
+				url        TEXT NOT NULL,
+				position   INTEGER NOT NULL DEFAULT 0,
+				created_at TEXT NOT NULL
+			) STRICT;
+			CREATE INDEX idx_links_position ON links (position, id);
+
+			CREATE TABLE posts (
+				id           INTEGER PRIMARY KEY AUTOINCREMENT,
+				slug         TEXT NOT NULL UNIQUE,
+				title        TEXT NOT NULL,
+				body         TEXT NOT NULL,
+				published_at TEXT,
+				created_at   TEXT NOT NULL,
+				updated_at   TEXT NOT NULL
+			) STRICT;
+			CREATE INDEX idx_posts_published ON posts (published_at DESC);
+
+			-- External identities bound to this instance (NIP-05 names,
+			-- ATProto DIDs later). verified_at is null until proven.
+			CREATE TABLE identities (
+				id          INTEGER PRIMARY KEY AUTOINCREMENT,
+				protocol    TEXT NOT NULL,
+				handle      TEXT NOT NULL,
+				public_key  TEXT NOT NULL,
+				verified_at TEXT,
+				last_error  TEXT NOT NULL DEFAULT '',
+				created_at  TEXT NOT NULL,
+				UNIQUE (protocol, handle)
+			) STRICT;
+
+			-- Drops hold ciphertext and nothing else. There is deliberately no
+			-- column for a filename, a content type, or a decryption key: the
+			-- client encrypts a metadata envelope into the blob, and the key
+			-- lives in the URL fragment, which never reaches the server.
+			CREATE TABLE drops (
+				id             TEXT PRIMARY KEY,
+				ciphertext     BLOB NOT NULL,
+				size_bytes     INTEGER NOT NULL,
+				created_at     TEXT NOT NULL,
+				expires_at     TEXT,
+				max_downloads  INTEGER,
+				download_count INTEGER NOT NULL DEFAULT 0,
+				burned_at      TEXT
+			) STRICT;
+			CREATE INDEX idx_drops_expires ON drops (expires_at);
+
+			-- Access records exist to enforce burn-after-N and to let the owner
+			-- see recent activity. They carry no requester identity, and a
+			-- sweeper deletes them after 24h — the retention promise is kept by
+			-- not storing anything worth keeping.
+			CREATE TABLE drop_access (
+				id          INTEGER PRIMARY KEY AUTOINCREMENT,
+				drop_id     TEXT NOT NULL REFERENCES drops(id) ON DELETE CASCADE,
+				accessed_at TEXT NOT NULL
+			) STRICT;
+			CREATE INDEX idx_drop_access_time ON drop_access (accessed_at);
+
+			-- Receive box: a stranger asks to send you a file, you approve
+			-- before any bytes are stored. This is what stops an open upload
+			-- endpoint filling your disk.
+			CREATE TABLE receive_requests (
+				id           TEXT PRIMARY KEY,
+				note         TEXT NOT NULL DEFAULT '',
+				size_hint    INTEGER,
+				status       TEXT NOT NULL DEFAULT 'pending',
+				drop_id      TEXT REFERENCES drops(id) ON DELETE SET NULL,
+				created_at   TEXT NOT NULL,
+				decided_at   TEXT,
+				expires_at   TEXT NOT NULL
+			) STRICT;
+			CREATE INDEX idx_receive_status ON receive_requests (status, created_at);
+		`,
+	},
 }
 
 // SchemaVersion returns the version the database is currently migrated to.

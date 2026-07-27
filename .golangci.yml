@@ -19,6 +19,21 @@ linters:
         # G104 duplicates errcheck. The deliberate ignores in this codebase are
         # annotated at the call site.
         - G104
+        # G304 flags opening a file whose path came from a variable. In denly
+        # every such path is one the operator typed — an archive to restore, a
+        # file to drop, their own data directory. Reading a path the user asked
+        # for is what a CLI does; there is no privilege boundary being crossed,
+        # since the process already runs as that user. Excluded at the rule
+        # level rather than annotated at each site, because every occurrence has
+        # this same justification and per-site nolints would imply otherwise.
+        - G304
+        # G703 is the taint-analysis form of the same finding: a path that
+        # reached os.Open from a command-line argument. Same reasoning — and
+        # note this exclusion covers only the CLI's own arguments. Paths that
+        # arrive over the network are a different matter entirely, which is why
+        # backup extraction validates every archive entry through safeJoin and
+        # archives are read through an os.Root rather than by raw path.
+        - G703
 
   exclusions:
     rules:

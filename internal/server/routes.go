@@ -20,6 +20,38 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("GET /healthz", s.handleHealth)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", s.staticHandler()))
 
+	// Public. Read-only, or write-only-with-approval in the receive box's case.
+	mux.HandleFunc("GET /.well-known/nostr.json", s.handleWellKnownNostr)
+	mux.HandleFunc("GET /api/profile", s.handleGetProfile)
+	mux.HandleFunc("GET /api/posts/{slug}", s.handleGetPost)
+	mux.HandleFunc("GET /d/{id}", s.handleFetchDrop)
+	mux.HandleFunc("POST /api/receive", s.handleRequestReceive)
+	mux.HandleFunc("POST /api/receive/{id}/upload", s.handleUploadToRequest)
+	mux.HandleFunc("GET /api/auth/challenge", s.handleChallenge)
+
+	// Admin. Every route that changes owner-controlled state lives here, behind
+	// the authenticator, so adding an endpoint forces a deliberate choice about
+	// which side of the line it belongs on.
+	admin := http.NewServeMux()
+	admin.HandleFunc("PUT /api/admin/profile", s.handleSaveProfile)
+	admin.HandleFunc("POST /api/admin/links", s.handleAddLink)
+	admin.HandleFunc("DELETE /api/admin/links/{id}", s.handleDeleteLink)
+	admin.HandleFunc("GET /api/admin/posts", s.handleListPostsAdmin)
+	admin.HandleFunc("POST /api/admin/posts", s.handleSavePost)
+	admin.HandleFunc("DELETE /api/admin/posts/{slug}", s.handleDeletePost)
+	admin.HandleFunc("GET /api/admin/export", s.handleExport)
+	admin.HandleFunc("POST /api/drops", s.handleCreateDrop)
+	admin.HandleFunc("GET /api/admin/drops", s.handleListDrops)
+	admin.HandleFunc("DELETE /api/admin/drops/{id}", s.handleDeleteDrop)
+	admin.HandleFunc("GET /api/admin/receive", s.handleListRequests)
+	admin.HandleFunc("POST /api/admin/receive/{id}/{decision}", s.handleDecideRequest)
+	admin.HandleFunc("POST /api/admin/identity/verify", s.handleVerifyIdentity)
+
+	guarded := s.auth.Middleware(admin)
+	for _, prefix := range []string{"/api/admin/", "/api/drops"} {
+		mux.Handle(prefix, guarded)
+	}
+
 	return s.recoverMiddleware(s.logMiddleware(securityHeaders(mux)))
 }
 
