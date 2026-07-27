@@ -3,7 +3,7 @@
 **Name:** Denly — denly.xyz (product + installer), GitHub repo [`fomothy/denly.xyz`](https://github.com/fomothy/denly.xyz)
 **Tagline candidates:** "Your corner of the internet, that only you hold the key to." / "Outlive your platforms."
 **Date:** 2026-07-27
-**Status:** Planning — no code yet
+**Status:** Phase 0 complete — [v0.1.0](https://github.com/fomothy/denly.xyz/releases/tag/v0.1.0) released, denly.xyz live. Phase 1 next
 
 ---
 
@@ -171,12 +171,44 @@ Operator (self-hoster or us) holds **availability, not secrets**.
 
 ## 6. Build Plan (phased)
 
-### Phase 0 — Skeleton (week 1)
-- Go module, `serve` command, embedded SQLite, hello-world embedded UI
-- GoReleaser CI (binaries + checksums + docker), install.sh, docker-compose.yml
-- **Exit:** `curl | sh` installs and serves a page on clean VPS and macOS
+### Phase 0 — Skeleton ✅ **complete (v0.1.0)**
+- ~~Go module, `serve` command, embedded SQLite, hello-world embedded UI~~
+- ~~GoReleaser CI (binaries + checksums + docker), install.sh, docker-compose.yml~~
+- **Exit met:** `curl -fsSL https://denly.xyz/install.sh | sh` installs, verifies
+  SHA-256, and serves — proven on macOS locally and on clean Linux and macOS
+  runners by the release workflow's own verify job.
+- Also shipped beyond the original scope: the denly.xyz landing page (Cloudflare
+  Worker + static assets) with a Resend-backed waitlist, cosign keyless
+  signatures, SBOMs, and CI across Linux/macOS/Windows.
 
-### Phase 1 — v1 core (weeks 2–6)
+**Decisions made during Phase 0**
+- Pure-Go SQLite (modernc) and `CGO_ENABLED=0` everywhere, so all five targets
+  cross-compile from one runner. CI enforces it; adding a cgo dependency fails
+  the build.
+- Migrations are append-only and transactional; opening a newer schema fails
+  loudly rather than risking data the binary cannot represent.
+- Data dir in the platform-conventional location at 0700, database 0600.
+- Loopback-only bind by default.
+- Request logs omit IP, user agent, and referrer — the cheapest way to keep a
+  log-retention promise is to never write the identifying fields.
+- Site deployed as a Cloudflare Worker, not Pages; the Resend API key lives in
+  a Worker secret and never reaches the browser.
+
+### Phase 1 — v1 core (weeks 2–6) ← **next**
+
+**Two decisions due before code:**
+- **Key material.** One secp256k1 keypair. NIP-44 for anything encrypted *to an
+  identity* (Deadhand payloads, receive-box approvals); a plain random symmetric
+  key for drops, which need no identity at all — that is what lets a recipient
+  who has never heard of denly open one from a `#key` fragment.
+- **Admin auth.** The server is read-only today, so nothing needs protecting.
+  The moment a presence page can be edited, it does. No passwords: localhost
+  trust locally, signed challenge remotely. Must land *with* the first mutable
+  endpoint, not after.
+
+Suggested order: identity → presence page → drops. The page needs identity to
+verify against, and the receive box needs keys to approve with.
+
 - Identity: Nostr NIP-05 verification; presence page rendering
 - Drops: browser E2EE, expiring links, receive box with approval flow
 - CLI: `drop`, `backup`, `restore`
@@ -221,6 +253,7 @@ Operator (self-hoster or us) holds **availability, not secrets**.
 | ~~Name~~ | **Decided: Denly — denly.xyz registered. Hosted tier uses `you.denly.xyz` (one domain, wildcard TLS), so no second domain required.** |
 | ~~GitHub org~~ | **Decided: repo is `fomothy/denly.xyz`** (module path `github.com/fomothy/denly.xyz`) |
 | X handle | Site footer links `@denlyhq`; the plan originally said `@denlydev`. Confirm which is actually yours before the first public post |
+| `denly init` on the site | "How it works" step 2 advertises `denly init`, which does not exist — the binary has `serve` and `version`. Phase 1 should make it real, and use that exact name for key generation |
 | Deadhand liveness (decades-long pinning) | Arweave pay-once; liveness dashboard honesty. Phase 2 |
 | Threshold crypto complexity | v2.0 time-based first; Shamir in v2.1 |
 | Abuse (hosted tier storing harmful ciphertext; receive-box spam) | Ciphertext-only + rate limits + approval flow + ToS/reporting. Phase 2/4 |
