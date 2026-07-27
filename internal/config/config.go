@@ -21,6 +21,20 @@ const (
 	// EnvAddr overrides the default listen address.
 	EnvAddr = "DENLY_ADDR"
 
+	// EnvIPFSAPI names a Kubo HTTP API endpoint, e.g. http://127.0.0.1:5001.
+	// A local node takes precedence over a pinning service when both are set,
+	// because a node the user runs beats a third party they merely have an
+	// account with.
+	EnvIPFSAPI = "DENLY_IPFS_API"
+
+	// EnvIPFSService names a pinning service upload endpoint.
+	EnvIPFSService = "DENLY_IPFS_SERVICE"
+
+	// EnvIPFSToken names the bearer token for that service. This is the name
+	// of an environment variable, not a credential — gosec's G101 pattern
+	// match on "TOKEN" is what the nolint below answers.
+	EnvIPFSToken = "DENLY_IPFS_TOKEN" //nolint:gosec // G101: an env var name, not a secret
+
 	// DefaultAddr binds loopback only. Deployment mode 1 in the plan is
 	// "local only"; exposing a fresh install to the network by default would
 	// be the wrong failure mode for a tool that holds someone's keys.
@@ -36,6 +50,22 @@ type Config struct {
 	DataDir string
 	// Addr is the TCP address the HTTP server binds.
 	Addr string
+	// IPFS holds the publishing endpoint, if one is configured.
+	IPFS IPFSConfig
+}
+
+// IPFSConfig describes where published content is pinned.
+type IPFSConfig struct {
+	// KuboAPI is a local or trusted Kubo HTTP API endpoint.
+	KuboAPI string
+	// ServiceURL and ServiceToken describe a pinning service upload endpoint.
+	ServiceURL   string
+	ServiceToken string
+}
+
+// Configured reports whether publishing is possible.
+func (c IPFSConfig) Configured() bool {
+	return c.KuboAPI != "" || (c.ServiceURL != "" && c.ServiceToken != "")
 }
 
 // Resolve builds a Config from flag values, falling back to environment
@@ -48,6 +78,11 @@ func Resolve(flagDataDir, flagAddr string) (Config, error) {
 	return Config{
 		DataDir: dataDir,
 		Addr:    firstNonEmpty(flagAddr, os.Getenv(EnvAddr), DefaultAddr),
+		IPFS: IPFSConfig{
+			KuboAPI:      os.Getenv(EnvIPFSAPI),
+			ServiceURL:   os.Getenv(EnvIPFSService),
+			ServiceToken: os.Getenv(EnvIPFSToken),
+		},
 	}, nil
 }
 

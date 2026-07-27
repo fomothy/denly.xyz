@@ -62,6 +62,8 @@ func TestEveryMutableEndpointRequiresAuth(t *testing.T) {
 		{http.MethodGet, "/api/admin/receive"},
 		{http.MethodPost, "/api/admin/receive/abc/approve"},
 		{http.MethodPost, "/api/admin/identity/verify"},
+		{http.MethodPost, "/api/admin/publish"},
+		{http.MethodGet, "/api/admin/publish"},
 	}
 
 	for _, c := range cases {
@@ -391,4 +393,41 @@ func itoa(n int64) string {
 		n /= 10
 	}
 	return string(b)
+}
+
+// An instance with no IPFS endpoint is a normal instance; publishing must say
+// so precisely rather than reporting a server fault.
+func TestPublishWithoutIPFSConfigured(t *testing.T) {
+	s := newTestServer(t)
+
+	rec := do(t, s, authed(http.MethodPost, "/api/admin/publish", nil))
+	if rec.Code != http.StatusPreconditionFailed {
+		t.Errorf("status = %d, want 412 when no IPFS endpoint is set", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "DENLY_IPFS_API") {
+		t.Error("the error does not tell the operator how to configure publishing")
+	}
+}
+
+func TestPublishStatusOnFreshInstance(t *testing.T) {
+	s := newTestServer(t)
+
+	rec := do(t, s, authed(http.MethodGet, "/api/admin/publish", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+
+	var out struct {
+		Configured bool `json:"configured"`
+		Published  bool `json:"published"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("decoding status: %v", err)
+	}
+	if out.Configured {
+		t.Error("status claims IPFS is configured when it is not")
+	}
+	if out.Published {
+		t.Error("status claims a publish happened on a fresh instance")
+	}
 }

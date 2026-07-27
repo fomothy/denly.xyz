@@ -46,6 +46,8 @@ func (s *Server) routes() http.Handler {
 	admin.HandleFunc("GET /api/admin/receive", s.handleListRequests)
 	admin.HandleFunc("POST /api/admin/receive/{id}/{decision}", s.handleDecideRequest)
 	admin.HandleFunc("POST /api/admin/identity/verify", s.handleVerifyIdentity)
+	admin.HandleFunc("POST /api/admin/publish", s.handlePublish)
+	admin.HandleFunc("GET /api/admin/publish", s.handlePublishStatus)
 
 	guarded := s.auth.Middleware(admin)
 	for _, prefix := range []string{"/api/admin/", "/api/drops"} {

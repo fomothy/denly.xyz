@@ -18,6 +18,7 @@ import (
 	"github.com/fomothy/denly.xyz/internal/identity"
 	"github.com/fomothy/denly.xyz/internal/nostr"
 	"github.com/fomothy/denly.xyz/internal/profile"
+	"github.com/fomothy/denly.xyz/internal/publish"
 	"github.com/fomothy/denly.xyz/internal/store"
 )
 
@@ -40,12 +41,16 @@ func newTestServer(t *testing.T) *Server {
 	}
 	owner := sk.PublicKey()
 
+	prof := profile.New(st)
 	s, err := New(cfg, st, log, Deps{
 		Owner:      &owner,
 		Auth:       auth.New(testAdminToken, owner),
-		Profile:    profile.New(st),
+		Profile:    prof,
 		Drops:      drop.New(st),
 		Identities: identity.NewResolver(),
+		// No pinner: publishing reports itself unconfigured, which is the
+		// default state of a fresh instance.
+		Publisher: publish.New(st, prof, nil),
 	})
 	if err != nil {
 		t.Fatalf("New: %v", err)

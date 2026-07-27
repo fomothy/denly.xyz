@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/fomothy/denly.xyz/internal/auth"
+	"github.com/fomothy/denly.xyz/internal/backup"
 	"github.com/fomothy/denly.xyz/internal/buildinfo"
 	"github.com/fomothy/denly.xyz/internal/config"
 	"github.com/fomothy/denly.xyz/internal/drop"
@@ -22,6 +23,7 @@ import (
 	"github.com/fomothy/denly.xyz/internal/keyring"
 	"github.com/fomothy/denly.xyz/internal/nostr"
 	"github.com/fomothy/denly.xyz/internal/profile"
+	"github.com/fomothy/denly.xyz/internal/publish"
 	"github.com/fomothy/denly.xyz/internal/server"
 	"github.com/fomothy/denly.xyz/internal/store"
 )
@@ -36,6 +38,7 @@ Commands:
   serve      Run the denly server
   whoami     Print this instance's identity
   drop       Encrypt a file locally and upload the ciphertext
+  publish    Pin the public presence page to IPFS
   backup     Write an encrypted archive of the data directory
   restore    Restore an encrypted archive
   version    Print version information
@@ -76,6 +79,8 @@ func run(args []string) error {
 		return runWhoami(args[1:])
 	case "drop":
 		return runDrop(args[1:])
+	case "publish":
+		return runPublish(args[1:])
 	case "backup":
 		return runBackup(args[1:])
 	case "restore":
@@ -153,12 +158,16 @@ func runServe(args []string) error {
 		ownerKey = *owner
 	}
 
+	prof := profile.New(st)
+	pinner := newPinner(cfg, log)
+
 	srv, err := server.New(cfg, st, log, server.Deps{
 		Owner:      owner,
 		Auth:       auth.New(token, ownerKey),
-		Profile:    profile.New(st),
+		Profile:    prof,
 		Drops:      drop.New(st),
 		Identities: identity.NewResolver(),
+		Publisher:  publish.New(st, prof, pinner),
 	})
 	if err != nil {
 		return err
@@ -250,5 +259,23 @@ func runSweeper(ctx context.Context, drops *drop.Service, log *slog.Logger) {
 		case <-ticker.C:
 			sweep()
 		}
+	}
+}
+
+// newPinner builds the IPFS client from configuration, or returns nil when
+// none is set. A nil pinner is a normal state: publishing simply reports that
+// it is unconfigured rather than the server refusing to start.
+func newPinner(cfg config.Config, log *slog.Logger) backup.Pinner {
+	switch {
+	case cfg.IPFS.KuboAPI != "":
+		log.Info("IPFS publishing enabled", "via", "kubo", "endpoint", cfg.IPFS.KuboAPI)
+		return backup.NewKuboPinner(cfg.IPFS.KuboAPI)
+	case cfg.IPFS.ServiceURL != "" && cfg.IPFS.ServiceToken != "":
+		// Endpoint only — never the token, which would otherwise end up in
+		// journald and in any log the user pastes into an issue.
+		log.Info("IPFS publishing enabled", "via", "pinning service", "endpoint", cfg.IPFS.ServiceURL)
+		return backup.NewServicePinner(cfg.IPFS.ServiceURL, cfg.IPFS.ServiceToken)
+	default:
+		return nil
 	}
 }

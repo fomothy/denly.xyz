@@ -11,6 +11,7 @@ import (
 	"github.com/fomothy/denly.xyz/internal/drop"
 	"github.com/fomothy/denly.xyz/internal/identity"
 	"github.com/fomothy/denly.xyz/internal/profile"
+	"github.com/fomothy/denly.xyz/internal/publish"
 )
 
 // JSON API for Phase 1. No HTML is rendered here — the presence page's markup
@@ -450,5 +451,45 @@ func (s *Server) handleVerifyIdentity(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, map[string]any{
 		"address":  addr.String(),
 		"verified": true,
+	})
+}
+
+// handlePublish pins the public presence page to IPFS.
+//
+// Only the published view is pinned. Drafts stay local: pinning is effectively
+// irreversible, and content-addressing someone's unpublished writing without
+// asking would be the worst kind of surprise.
+func (s *Server) handlePublish(w http.ResponseWriter, r *http.Request) {
+	var pubkey string
+	if s.owner != nil {
+		pubkey = s.owner.Hex()
+	}
+
+	rec, err := s.publisher.Publish(r.Context(), pubkey)
+	if errors.Is(err, publish.ErrNotConfigured) {
+		s.writeError(w, http.StatusPreconditionFailed, err.Error())
+		return
+	}
+	if err != nil {
+		s.log.Error("publishing to ipfs", "error", err)
+		s.writeError(w, http.StatusBadGateway, "could not pin to IPFS: "+err.Error())
+		return
+	}
+
+	s.log.Info("pinned presence page", "cid", rec.CID)
+	s.writeJSON(w, http.StatusOK, rec)
+}
+
+// handlePublishStatus reports the most recent pin.
+func (s *Server) handlePublishStatus(w http.ResponseWriter, r *http.Request) {
+	rec, ok, err := s.publisher.Last(r.Context())
+	if err != nil {
+		s.writeError(w, http.StatusInternalServerError, "could not read publish status")
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"configured": s.publisher.Configured(),
+		"published":  ok,
+		"last":       rec,
 	})
 }

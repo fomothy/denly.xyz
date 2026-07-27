@@ -19,6 +19,7 @@ import (
 	"github.com/fomothy/denly.xyz/internal/identity"
 	"github.com/fomothy/denly.xyz/internal/nostr"
 	"github.com/fomothy/denly.xyz/internal/profile"
+	"github.com/fomothy/denly.xyz/internal/publish"
 	"github.com/fomothy/denly.xyz/internal/store"
 	"github.com/fomothy/denly.xyz/web"
 )
@@ -45,6 +46,7 @@ type Server struct {
 	profile    *profile.Service
 	drops      *drop.Service
 	identities *identity.Resolver
+	publisher  *publish.Service
 
 	http *http.Server
 }
@@ -57,6 +59,7 @@ type Deps struct {
 	Profile    *profile.Service
 	Drops      *drop.Service
 	Identities *identity.Resolver
+	Publisher  *publish.Service
 }
 
 // New builds a Server. Template parsing and asset mounting happen here so that
@@ -84,6 +87,7 @@ func New(cfg config.Config, st *store.Store, log *slog.Logger, deps Deps) (*Serv
 		profile:    deps.Profile,
 		drops:      deps.Drops,
 		identities: deps.Identities,
+		publisher:  deps.Publisher,
 	}
 
 	s.http = &http.Server{
