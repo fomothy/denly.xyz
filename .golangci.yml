@@ -24,8 +24,11 @@ linters:
     rules:
       # Tests trade some rigor for readability: fixture helpers panic instead
       # of threading errors, and table-driven cases repeat themselves.
+      # `defer db.Close()` in a test is idiomatic — a failure to close during
+      # teardown tells you nothing that the test result has not already said.
       - path: _test\.go
         linters:
+          - errcheck
           - gosec
           - unparam
 

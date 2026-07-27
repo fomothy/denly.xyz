@@ -78,7 +78,7 @@ func runServe(args []string) error {
 		verbose = fs.Bool("v", false, "verbose (debug) logging")
 	)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: denly serve [flags]\n\nFlags:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: denly serve [flags]\n\nFlags:\n")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -104,7 +104,7 @@ func runServe(args []string) error {
 	if err != nil {
 		return err
 	}
-	defer st.Close()
+	defer func() { _ = st.Close() }() // checked explicitly below; this covers early returns
 
 	srv, err := server.New(cfg, st, log)
 	if err != nil {
@@ -128,7 +128,7 @@ func runVersion(args []string) error {
 	fs := flag.NewFlagSet("version", flag.ContinueOnError)
 	asJSON := fs.Bool("json", false, "print version information as JSON")
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: denly version [flags]\n\nFlags:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: denly version [flags]\n\nFlags:\n")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {

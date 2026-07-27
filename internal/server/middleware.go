@@ -64,7 +64,10 @@ func (s *Server) recoverMiddleware(next http.Handler) http.Handler {
 			if rec := recover(); rec != nil {
 				// http.ErrAbortHandler is the documented way for a handler to
 				// abort without noise; re-panic so net/http handles it.
-				if rec == http.ErrAbortHandler {
+				// errorlint flags == here, but a recovered panic value is
+				// matched by identity, not error wrapping — net/http compares
+				// ErrAbortHandler the same way.
+				if rec == http.ErrAbortHandler { //nolint:errorlint // panic value, not a wrapped error
 					panic(rec)
 				}
 				s.log.Error("panic recovered",

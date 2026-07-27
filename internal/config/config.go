@@ -73,6 +73,7 @@ func EnsureDataDir(dir string) error {
 	}
 	// MkdirAll is a no-op on an existing directory, so an inherited loose mode
 	// (for example a bind-mounted Docker volume) would survive unnoticed.
+	//nolint:gosec // G302 targets file modes; a directory needs 0700 to be traversable
 	if err := os.Chmod(dir, 0o700); err != nil {
 		return fmt.Errorf("securing data dir %q: %w", dir, err)
 	}

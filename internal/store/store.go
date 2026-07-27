@@ -43,23 +43,24 @@ func Open(ctx context.Context, path string) (*Store, error) {
 	db.SetConnMaxLifetime(0)
 
 	if err := db.PingContext(ctx); err != nil {
-		db.Close()
+		// Ignore the close error: it would mask the connection failure below.
+		_ = db.Close()
 		return nil, fmt.Errorf("connecting to database %q: %w", path, err)
 	}
 
 	s := &Store{db: db}
 	if err := s.applyPragmas(ctx); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 	// Restrict permissions after the pragmas, because enabling WAL is what
 	// creates the -wal and -shm sidecar files.
 	if err := secureDBFiles(path); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 	if err := s.Migrate(ctx); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, err
 	}
 	return s, nil

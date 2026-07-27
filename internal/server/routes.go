@@ -74,7 +74,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	fmt.Fprint(w, buf.String())
+	_, _ = fmt.Fprint(w, buf.String())
 }
 
 // healthResponse is the /healthz body. Kept small and stable: monitoring and
