@@ -32,3 +32,6 @@ Thumbs.db
 # Wrangler local dev state
 /.wrangler/
 /node_modules/
+
+# Compiled Worker script (built at deploy time from functions/)
+/build/

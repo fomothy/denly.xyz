@@ -1,0 +1,4 @@
+# Pages excluded these automatically; Workers uploads everything in the asset
+# directory unless told otherwise.
+.DS_Store
+**/.DS_Store

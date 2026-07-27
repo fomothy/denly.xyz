@@ -1,0 +1,48 @@
+{
+  // Cloudflare Worker serving denly.xyz: the static landing page plus the
+  // waitlist endpoint at /api/subscribe.
+  //
+  // Deployed with `npx wrangler deploy`. The build step that has to run first
+  // is in the dashboard's build command (see site/README.md) — it copies
+  // install.sh into the published directory and compiles functions/ into the
+  // Worker script referenced by "main" below.
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Worker names allow lowercase alphanumerics and hyphens only, so this
+  // cannot be "denly.xyz". The custom domain is configured separately.
+  "name": "denly",
+
+  "compatibility_date": "2026-07-27",
+
+  // Compiled from functions/api/subscribe.js by
+  // `wrangler pages functions build`. Not committed — see .gitignore.
+  //
+  // Deliberately NOT under dist/: GoReleaser owns that directory for the Go
+  // binary and wipes it with --clean, which would silently delete this.
+  "main": "./build/worker/index.js",
+
+  "assets": {
+    "directory": "./site",
+
+    // Required. Pages supplied an ASSETS binding implicitly; Workers does not.
+    // The compiled functions script calls env.ASSETS.fetch() to fall through
+    // for anything it does not handle, so without this every unmatched path
+    // throws "Cannot read properties of undefined" and returns 500 instead of
+    // a 404 — on every mistyped URL and every bot probe.
+    "binding": "ASSETS"
+
+    // run_worker_first is intentionally left unset. Workers serves a matching
+    // static asset first and only falls through to the Worker when nothing
+    // matches — which is exactly the routing we want, since /api/subscribe is
+    // the only dynamic path. This replaces the _routes.json that Pages needed.
+  },
+
+  // A workers.dev URL for testing before the custom domain is pointed here.
+  "workers_dev": true,
+
+  // Surfaces the console.error calls the waitlist function makes when Resend
+  // rejects a signup. Without this, a failing form is invisible.
+  "observability": {
+    "enabled": true
+  }
+}
