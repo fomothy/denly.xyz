@@ -166,22 +166,23 @@ function errorPage(message) {
   const safe = String(message).replace(/[<>&]/g, (c) =>
     ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]
   );
-  return `<!doctype html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Something went wrong — denly</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Something went wrong — Denly</title>
+<link rel="icon" type="image/png" href="/denly-fox-512.png">
 <link rel="stylesheet" href="/style.css">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
-<main class="block outcome">
-  <p class="eyebrow">waitlist</p>
-  <h1 class="outcome-h">That didn't work</h1>
-  <p class="outcome-sub">${safe}</p>
-  <p><a href="/">Back to denly.xyz</a></p>
-</main>
+<header class="hero">
+  <div class="wrap">
+    <h1>That didn't <em>work</em>.</h1>
+    <p class="sub">${safe}</p>
+    <div class="hero-cta"><a class="btn" href="/">Back to denly.xyz</a></div>
+  </div>
+</header>
 </body>
 </html>`;
 }

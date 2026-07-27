@@ -219,7 +219,8 @@ Operator (self-hoster or us) holds **availability, not secrets**.
 |---|---|
 | ~~License~~ | **Decided: AGPLv3 + CLA** |
 | ~~Name~~ | **Decided: Denly — denly.xyz registered. Hosted tier uses `you.denly.xyz` (one domain, wildcard TLS), so no second domain required.** |
-| Handle/org availability | Verify GitHub org `denly` and X handle; fall back to `denlyxyz` / `denlyapp`. Do before first public post |
+| ~~GitHub org~~ | **Decided: repo is `fomothy/denly.xyz`** (module path `github.com/fomothy/denly.xyz`) |
+| X handle | Site footer links `@denlyhq`; the plan originally said `@denlydev`. Confirm which is actually yours before the first public post |
 | Deadhand liveness (decades-long pinning) | Arweave pay-once; liveness dashboard honesty. Phase 2 |
 | Threshold crypto complexity | v2.0 time-based first; Shamir in v2.1 |
 | Abuse (hosted tier storing harmful ciphertext; receive-box spam) | Ciphertext-only + rate limits + approval flow + ToS/reporting. Phase 2/4 |
@@ -231,6 +232,6 @@ Operator (self-hoster or us) holds **availability, not secrets**.
 
 ## 9. Immediate next actions
 
-1. ~~Register domain~~ — **denly.xyz registered.** Verify/claim X handle and create GitHub org `denly`. Optionally register `denly.sh` for the shorter `curl denly.sh | sh` installer headline
+1. ~~Register domain~~ — **denly.xyz registered; it is the only domain.** The installer headline is `curl -fsSL https://denly.xyz/install.sh | sh`. Do not advertise a `denly.sh` shortcut: it is unregistered, so anyone could claim it and serve their own script to everyone who copies that line. ~~Create GitHub repo~~ — [`fomothy/denly.xyz`](https://github.com/fomothy/denly.xyz). Still to do: verify/claim the X handle
 2. Scaffold repo per Phase 0 (Go module + GoReleaser + install.sh + embedded UI skeleton)
 3. First build-in-public post: the name, the why, the AGPL choice

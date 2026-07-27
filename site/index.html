@@ -1,197 +1,260 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>denly — your den on the internet</title>
-<meta name="description" content="A single binary you run on your own machine: a presence page, encrypted file drops, and a dead man's switch. Your keys never leave.">
-
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/style.css">
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denly — Your den on the internet</title>
+<meta name="description" content="A single-binary, self-hostable home on the internet. Verified identity, encrypted file drops, and a dead man's switch. Open source, keys never leave your device.">
+<meta property="og:title" content="Denly — Your den on the internet">
+<meta property="og:description" content="Self-hostable presence page, encrypted drops, and a dead man's switch. Open source. Your keys, your den, your rules.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://denly.xyz">
-<meta property="og:title" content="denly — your den on the internet">
-<meta property="og:description" content="A single binary you run on your own machine: a presence page, encrypted file drops, and a dead man's switch. Your keys never leave.">
+<meta property="og:image" content="https://denly.xyz/denly-fox-512.png">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="/denly-fox-512.png">
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#features">Skip to content</a>
 
-<header class="bar">
-  <a class="wordmark" href="/" aria-label="denly home">
-    <svg class="keyhole" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
-      <circle cx="6" cy="6" r="2.6"/>
-      <path d="M6 8.6 L4.6 14 h2.8 z"/>
-    </svg>
-    denly
-  </a>
-  <a class="bar-link" href="https://github.com/fomothy/denly.xyz">source on github ↗</a>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#"><img src="/denly-fox-mark.png" alt="" width="106" height="128"> denly</a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#deadhand">Deadhand</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="https://github.com/fomothy/denly.xyz" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn" href="#waitlist">Join waitlist</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <img class="hero-fox" src="/denly-fox.png" alt="The Denly fox guarding an open padlock" width="350" height="420">
+    <h1>Your den on<br>the <em>internet</em>.</h1>
+    <p class="sub">A single-binary, self-hostable home online: verified identity, encrypted file drops, and a dead man's switch. Open source. Your keys never leave your device.</p>
+    <div class="hero-cta">
+      <a class="btn" href="#waitlist">Get early access 🦊</a>
+      <a class="btn btn-ghost" href="https://github.com/fomothy/denly.xyz" target="_blank" rel="noopener">Star on GitHub</a>
+    </div>
+    <div class="hero-install mono">
+      <span class="prompt">$</span> <code>curl -fsSL https://denly.xyz/install.sh | sh</code>
+      <div class="hero-install-note">one command. one binary. your whole den. <em>(soon)</em></div>
+    </div>
+  </div>
 </header>
 
-<main id="main">
+<!-- PRINCIPLES -->
+<div class="principles">
+  <div class="wrap">
+    <div class="principle"><span class="icon">🔑</span><div><strong>Your keys, always</strong><span>Generated on your device. Never transmitted. Even we can't read your stuff.</span></div></div>
+    <div class="principle"><span class="icon">📦</span><div><strong>One binary</strong><span>No Docker maze, no database server. Download, run, done.</span></div></div>
+    <div class="principle"><span class="icon">🌐</span><div><strong>Outlive platforms</strong><span>Anchored to open protocols — Nostr, IPFS, Arweave. Not to us.</span></div></div>
+    <div class="principle"><span class="icon">📖</span><div><strong>Open source</strong><span>AGPLv3. Audit every line. Self-host forever, free.</span></div></div>
+  </div>
+</div>
 
-  <!-- Hero -->
-  <section class="hero">
-    <h1>your den on the internet.</h1>
-
-    <p class="lede">
-      A single binary you run on your own machine. It gives you a page that's
-      yours, encrypted file transfer, and a dead man's switch — anchored to open
-      protocols instead of anyone's platform.
-    </p>
-
-    <div class="plate-wrap">
-      <div class="plate">
-        <code id="install-cmd">curl -fsSL https://denly.xyz/install.sh | sh</code>
-        <button type="button" class="copy" data-copy="#install-cmd">
-          <span class="copy-label">copy</span>
-        </button>
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">What's in the den</div>
+      <h2>Everything you need to<br>hold your corner of the web</h2>
+      <p>Not another platform. Software you run, on infrastructure you choose, proving identity with math instead of terms of service.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature">
+        <div class="f-icon">🏠</div>
+        <h3>Presence page</h3>
+        <p>Your public home — bio, links, posts — cryptographically verified as yours via Nostr NIP-05 and ATProto. No platform can take it down or fake it.</p>
       </div>
-      <p class="plate-note">
-        <span class="dot" aria-hidden="true"></span>
-        Not released yet. That line is the entire install, once there's something
-        to install.
-      </p>
+      <div class="feature">
+        <div class="f-icon">📬</div>
+        <h3>Encrypted drops</h3>
+        <p>Send and receive files end-to-end encrypted in the browser. The server stores only ciphertext. Expiring links, burn-after-download, zero knowledge.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon">🛡️</div>
+        <h3>Receive box</h3>
+        <p>A "send me a file" button for your page — with approval flow. Sources, friends, and strangers can request; you accept before anything lands.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon">⚰️</div>
+        <h3>Deadhand</h3>
+        <p>A dead man's switch that actually can't be read by the operator. Encrypted payloads, heartbeat check-ins, guardian thresholds, permanent storage.</p>
+        <span class="tag">flagship</span>
+      </div>
+      <div class="feature">
+        <div class="f-icon">🧅</div>
+        <h3>Reachable anywhere</h3>
+        <p>Localhost, Tailscale, Tor onion, or your own domain with auto-TLS. No port-forwarding nightmares — one toggle and you're reachable.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon">💾</div>
+        <h3>Permanent backups</h3>
+        <p>Every publish pins to IPFS; one click pays once for Arweave permanence. Export everything anytime. If we vanish, your den doesn't.</p>
+      </div>
     </div>
-  </section>
-
-  <div class="seam" role="presentation">
-    <svg class="seam-mark" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
-      <circle cx="6" cy="6" r="2.6"/>
-      <path d="M6 8.6 L4.6 14 h2.8 z"/>
-    </svg>
   </div>
+</section>
 
-  <!-- What it is -->
-  <section class="block">
-    <p class="eyebrow">what it is</p>
-
-    <div class="grid">
-      <article class="item">
-        <h2>A page that's yours</h2>
-        <p>
-          Your bio, links, and writing, at your own domain. Markdown in, plain
-          HTML out — export the whole thing and walk away whenever you want.
-        </p>
-      </article>
-
-      <article class="item">
-        <h2>Drops</h2>
-        <p>
-          Send someone a file. It's encrypted in your browser before it leaves.
-          The key rides in the link, so the server only ever holds ciphertext.
-        </p>
-      </article>
-
-      <article class="item">
-        <h2>Deadhand</h2>
-        <p>
-          A dead man's switch. Check in on whatever schedule you set. Miss enough
-          check-ins and an encrypted payload goes to the people you chose.
-        </p>
-      </article>
-
-      <article class="item">
-        <h2>Your keys</h2>
-        <p>
-          Generated on your machine, stored on your machine, never transmitted.
-          Losing the server never means losing the keys.
-        </p>
-      </article>
+<!-- DEADHAND -->
+<section class="deadhand" id="deadhand">
+  <div class="wrap">
+    <div class="deadhand-inner">
+      <div>
+        <div class="kicker-standalone">The flagship</div>
+        <h2>Deadhand: the switch that fires when you can't</h2>
+        <p>Named for the Cold War system that answered the unthinkable. Compose encrypted messages and files for the people who matter — family, a lawyer, the public. Check in on your schedule. If you stop, Deadhand delivers.</p>
+        <ul>
+          <li>Payloads encrypted to recipients' keys before they leave your browser</li>
+          <li>Heartbeat via signed note, link click, CLI ping, or wallet signature</li>
+          <li>Escalation reminders and trusted-contact nudges prevent false alarms</li>
+          <li>v2: N-of-M guardian thresholds — and guardians can prove you're alive</li>
+          <li>Test-fire a drill anytime, so you trust the machinery</li>
+        </ul>
+      </div>
+      <!-- A mockup of the planned interface, not a live instance. Labelled as
+           such in the card so it cannot be mistaken for a shipped feature. -->
+      <div class="switch-card">
+        <div class="sc-head">
+          <span class="sc-title">🦊 Deadhand · Switch #1</span>
+          <span class="status-ok">● ARMED</span>
+        </div>
+        <div class="sc-row"><span>Payload</span><span>encrypted · 2 recipients</span></div>
+        <div class="sc-row"><span>Storage</span><span>Arweave · permanent ✓</span></div>
+        <div class="sc-row"><span>Check-in interval</span><span>30 days + 14 grace</span></div>
+        <div class="sc-row"><span>Last heartbeat</span><span>9 days ago</span></div>
+        <div class="sc-bar"><div class="sc-bar-fill"></div></div>
+        <div class="sc-note">Next check-in due in 21 days — we'll nudge you, then your trusted contact, before anything fires. <em>Mockup of the planned interface.</em></div>
+      </div>
     </div>
-  </section>
-
-  <div class="seam" role="presentation">
-    <svg class="seam-mark" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
-      <circle cx="6" cy="6" r="2.6"/>
-      <path d="M6 8.6 L4.6 14 h2.8 z"/>
-    </svg>
   </div>
+</section>
 
-  <!-- The invariant -->
-  <section class="block">
-    <p class="eyebrow">the one rule everything is built around</p>
+<!-- HOW IT WORKS -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">How it works</div>
+      <h2>Three steps to sovereignty</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>Run one command</h3>
+        <p>One static binary with the database and UI built in. Runs on a $4 VPS, a Raspberry Pi, or your laptop.</p>
+        <code class="mono">curl -fsSL https://denly.xyz/install.sh | sh</code>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Claim your keys</h3>
+        <p>Keys generate on your device and never leave it. Link your Nostr or ATProto identity to prove the den is yours.</p>
+        <code class="mono">denly init</code>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>Open your den</h3>
+        <p>Publish your page, start dropping files, arm your switch. Localhost, Tailscale, Tor, or your own domain.</p>
+        <code class="mono">denly serve</code>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <div class="diagram-scroll">
-<!-- Pure ASCII on purpose: box-drawing and triangle glyphs are not all one
-     cell wide, so a diagram built from them falls out of alignment in most
-     monospace fonts. -->
-<pre class="diagram" aria-label="Diagram: your browser encrypts data into ciphertext, the server stores the ciphertext, and keys never leave your browser.">
- your browser --encrypts--> ciphertext --> server stores it
- ^                                                        |
- +---------------- keys never leave here -----------------+
-</pre>
+<!-- PRIVACY -->
+<section class="section-flush">
+  <div class="wrap">
+    <div class="privacy-callout">
+      <div class="big">We host <em>availability</em>,<br>not <em>secrets</em>.</div>
+      <p>Every sensitive payload is encrypted on your device before it touches any server — yours or ours. Self-host the whole thing for free, forever. If a hosted version ever exists, it will hold ciphertext it cannot read, and you can export and leave anytime. That's not a promise; it's the architecture.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" class="section-flush">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Roadmap</div>
+      <h2>Built in public, shipped in phases</h2>
+      <p>Follow along on GitHub and X. Every phase launches with demos, not promises.</p>
+    </div>
+    <div class="roadmap-list">
+      <div class="rm-item">
+        <div class="rm-badge rm-now">NOW</div>
+        <div>
+          <h4>Phase 0 — Foundations</h4>
+          <p>Done and open source: the single binary, embedded storage, signed release pipeline, and one-command installer. No product features yet.</p>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-badge rm-next">NEXT</div>
+        <div>
+          <h4>v1 — Core den</h4>
+          <p>Presence page, Nostr identity verification, encrypted drops with receive box, and the CLI.</p>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-badge rm-next">THEN</div>
+        <div>
+          <h4>v2 — Deadhand</h4>
+          <p>The dead man's switch: heartbeats, escalation, encrypted payload release, Arweave permanence, drill mode.</p>
+        </div>
+      </div>
+      <div class="rm-item">
+        <div class="rm-badge rm-later">MAYBE</div>
+        <div>
+          <h4>Hosted tier</h4>
+          <p>Only if the waitlist demands it. Same code, same crypto, isolated per-customer instances. Export-and-leave anytime, guaranteed by design.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAITLIST -->
+<section class="waitlist section-flush" id="waitlist">
+  <div class="wrap">
+    <div class="section-head section-head-flush">
+      <div class="kicker">Early access</div>
+      <h2>Get a ping when the den opens 🦊</h2>
+      <p>v1 launch notification, build-in-public updates, and a vote on whether hosted hosting should exist. No spam, no tracking — obviously.</p>
     </div>
 
-    <p class="after-diagram">
-      Whoever runs the server — you, or anyone else — holds
-      <strong>availability, not secrets</strong>. It's a constraint on the
-      architecture, not a promise in a privacy policy.
-    </p>
-  </section>
+    <!-- Posts to our own Pages Function, which forwards to Resend. A real form
+         POST, so it works with JavaScript off; app.js upgrades it to submit in
+         place. Never point this straight at an email provider: the API key
+         would have to ship in the page. -->
+    <form class="waitlist-form" action="/api/subscribe" method="post">
+      <label class="hp-field" for="email">Email address</label>
+      <input id="email" type="email" name="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
 
-  <div class="seam" role="presentation">
-    <svg class="seam-mark" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
-      <circle cx="6" cy="6" r="2.6"/>
-      <path d="M6 8.6 L4.6 14 h2.8 z"/>
-    </svg>
-  </div>
-
-  <!-- Waitlist -->
-  <section class="block signup">
-    <p class="eyebrow">waitlist</p>
-    <h2 class="signup-h">Hear about it when it ships</h2>
-    <p class="signup-sub">
-      One email when there's a release worth installing. No drip sequence, no
-      newsletter.
-    </p>
-
-    <!--
-      Posts to our own Pages Function, which forwards to Resend. A plain form
-      POST, so it works with JavaScript disabled; app.js upgrades it to submit
-      in place.
-    -->
-    <form class="form" action="/api/subscribe" method="post">
-      <label class="visually-hidden" for="email">Email address</label>
-      <input id="email"
-             type="email"
-             name="email"
-             inputmode="email"
-             autocomplete="email"
-             placeholder="you@example.com"
-             required>
-
-      <!-- Honeypot. Hidden from people, filled in by naive bots. -->
-      <div class="visually-hidden" aria-hidden="true">
+      <div class="hp-field" aria-hidden="true">
         <label for="hp-check">Leave this field empty</label>
         <input id="hp-check" type="text" name="hp_check" tabindex="-1" autocomplete="off">
       </div>
 
-      <button type="submit">Join the waitlist</button>
+      <button class="btn" type="submit">Join waitlist</button>
     </form>
 
-    <p class="form-note" id="form-status" role="status">
-      Your address goes to Resend and nowhere else. Unsubscribe in one click.
-    </p>
-  </section>
+    <div class="waitlist-note" id="form-status" role="status">Prefer protocols? Watch the repo on <a href="https://github.com/fomothy/denly.xyz" target="_blank" rel="noopener" class="link-orange">GitHub</a> instead.</div>
+  </div>
+</section>
 
-</main>
-
-<footer class="foot">
-  <p class="foot-status">
-    <span class="pip" aria-hidden="true"></span>
-    Phase 0 is built and open source: the binary, storage, release pipeline, and
-    installer all work. Features come next.
-  </p>
-  <p class="foot-links">
-    <a href="https://github.com/fomothy/denly.xyz">github</a>
-    <span aria-hidden="true">·</span>
-    <a href="https://github.com/fomothy/denly.xyz/blob/main/LICENSE">AGPL-3.0</a>
-    <span aria-hidden="true">·</span>
-    built in public
-  </p>
+<footer>
+  <div class="wrap">
+    <div class="f-left"><img src="/denly-fox-mark.png" alt="" class="f-mark" width="106" height="128"> denly — your den on the internet. AGPLv3.</div>
+    <div class="f-links">
+      <a href="https://github.com/fomothy/denly.xyz" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://x.com/denlyhq" target="_blank" rel="noopener">X</a>
+      <a href="mailto:denly.xyz@protonmail.com">Contact</a>
+    </div>
+  </div>
 </footer>
 
 <script src="/app.js" defer></script>

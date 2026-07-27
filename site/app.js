@@ -1,48 +1,9 @@
-// Progressive enhancement only. Everything here has a working fallback: the
-// install command is selectable text, and the waitlist form is a real form
-// that posts and redirects on its own when this file never runs.
-
-/* ------------------------------------------------ copy the install line ---- */
-
-document.querySelectorAll("[data-copy]").forEach(function (button) {
-  var target = document.querySelector(button.dataset.copy);
-  var label = button.querySelector(".copy-label");
-  if (!target || !label) return;
-
-  var original = label.textContent;
-  var revert;
-
-  function show(text, done) {
-    label.textContent = text;
-    button.classList.toggle("done", done);
-    clearTimeout(revert);
-    revert = setTimeout(function () {
-      label.textContent = original;
-      button.classList.remove("done");
-    }, 1600);
-  }
-
-  button.addEventListener("click", function () {
-    // Unavailable on insecure origins and in older browsers. There is no
-    // useful fallback, so fail quietly rather than throwing an error into the
-    // console of someone just reading a page.
-    if (!navigator.clipboard) return;
-
-    navigator.clipboard.writeText(target.textContent.trim()).then(
-      function () {
-        show("copied", true);
-      },
-      function () {
-        show("press ⌘C", false);
-      }
-    );
-  });
-});
-
-/* -------------------------------------------------------- waitlist form ---- */
+// Progressive enhancement only. The waitlist form is a real form that posts
+// and redirects to /thanks on its own when this file never runs, so a blocked
+// or failed script costs a visitor nothing.
 
 (function () {
-  var form = document.querySelector(".form");
+  var form = document.querySelector(".waitlist-form");
   var status = document.getElementById("form-status");
   if (!form || !status) return;
 
@@ -52,13 +13,18 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   if (!input || !button) return;
 
   var buttonText = button.textContent;
-  var restingNote = status.textContent;
+  // Snapshot of our own static markup, taken before anything is written to the
+  // page — the resting note contains a link to the repo. It is only ever
+  // restored verbatim, and no user input or server response reaches it: every
+  // message from the function is written with textContent below. Do not put
+  // anything dynamic through this variable.
+  var restingNote = status.innerHTML;
 
   form.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    // Let the browser's own validation message handle empty or malformed
-    // input rather than inventing a second, inconsistent one.
+    // Let the browser's own validation bubble handle empty or malformed input
+    // rather than inventing a second, inconsistent message.
     if (!form.reportValidity()) return;
 
     setBusy(true);
@@ -82,7 +48,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
         if (result.ok) {
           form.hidden = true;
           status.classList.add("is-success");
-          status.textContent = result.body.message;
+          status.textContent = "🦊 " + result.body.message;
         } else {
           setBusy(false);
           status.classList.add("is-error");
@@ -101,7 +67,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
     input.disabled = busy;
     button.textContent = busy ? "Joining…" : buttonText;
     if (!busy && status.textContent === "Adding you…") {
-      status.textContent = restingNote;
+      status.innerHTML = restingNote;
     }
   }
 })();

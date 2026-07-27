@@ -7,8 +7,10 @@ site/                     published output
 ├── index.html            the page
 ├── thanks.html           served at /thanks — where the form lands without JS
 ├── style.css
-├── app.js                copy button + in-place form submit (both optional)
-├── favicon.svg
+├── app.js                in-place form submit (optional; form works without it)
+├── denly-fox.png         hero, 350x420
+├── denly-fox-mark.png    nav and footer mark, 106x128
+├── denly-fox-512.png     favicon and og:image
 ├── _headers              response headers + CSP
 └── _routes.json          keeps static requests off the Functions bill
 
@@ -126,8 +128,24 @@ and verify the token at the top of the function.
 ## Before it goes live
 
 - Set `RESEND_API_KEY` in Pages, or the form will 500.
-- Once `v0.1.0` is tagged, delete the `.plate-note` paragraph in `index.html` —
-  it is the "Not released yet" caveat under the install command.
+- Once `v0.1.0` is tagged, drop the `(soon)` from `.hero-install-note` in
+  `index.html` and move Phase 0 off the `NOW` badge in the roadmap.
+- `denly init` appears in step 2 of "How it works" but does not exist yet — the
+  binary has `serve` and `version`. Fine as a roadmap promise, worth revisiting
+  before anyone can actually install.
+- The X link points at `@denlyhq`; confirm that handle is yours before launch.
+
+## Assets and CSS
+
+All CSS lives in `style.css`, not in a `<style>` block. That is not stylistic:
+the CSP is `style-src 'self'` with no `'unsafe-inline'`, so an inline `<style>`
+or any `style=""` attribute is **blocked in production** while still rendering
+fine from a local `file://` preview. If you paste in markup with inline styles,
+move them into `style.css` or the layout will silently break once deployed.
+
+Fox images are resized from the originals: the hero renders at 150px wide and
+the nav mark at ~34px tall, so shipping the 682px source would waste about
+600KB on every visit to the page every tweet points at.
 
 ## Notes
 

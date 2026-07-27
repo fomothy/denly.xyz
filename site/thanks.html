@@ -1,42 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>You're on the list — denly</title>
-<meta name="description" content="You've joined the denly waitlist.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>You're on the list — Denly</title>
+<meta name="description" content="You've joined the Denly waitlist.">
 <meta name="robots" content="noindex">
-
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" type="image/png" href="/denly-fox-512.png">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
-<header class="bar">
-  <a class="wordmark" href="/" aria-label="denly home">
-    <svg class="keyhole" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
-      <circle cx="6" cy="6" r="2.6"/>
-      <path d="M6 8.6 L4.6 14 h2.8 z"/>
-    </svg>
-    denly
-  </a>
-  <a class="bar-link" href="https://github.com/fomothy/denly.xyz">source on github ↗</a>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="/"><img src="/denly-fox-mark.png" alt="" width="106" height="128"> denly</a>
+    <div class="nav-links">
+      <a href="https://github.com/fomothy/denly.xyz" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Where the form redirects with JavaScript off. With JavaScript the
+     confirmation appears in place and nobody lands here. -->
+<header class="hero">
+  <div class="wrap">
+    <img class="hero-fox" src="/denly-fox.png" alt="" width="350" height="420">
+    <h1>You're <em>in</em>.</h1>
+    <p class="sub">You'll get one email when there's a release worth installing — plus the occasional build-in-public update. Nothing else.</p>
+    <div class="hero-cta">
+      <a class="btn" href="/">Back to denly.xyz</a>
+      <a class="btn btn-ghost" href="https://github.com/fomothy/denly.xyz" target="_blank" rel="noopener">Watch the repo</a>
+    </div>
+  </div>
 </header>
 
-<!-- Where the form redirects when JavaScript is off. With JavaScript the
-     confirmation appears in place and nobody ever lands here. -->
-<main class="block outcome">
-  <p class="eyebrow">waitlist</p>
-  <h1 class="outcome-h">You're on the list.</h1>
-  <p class="outcome-sub">
-    You'll get one email when there's a release worth installing. Nothing else.
-  </p>
-  <p class="outcome-links">
-    <a href="/">Back to denly.xyz</a>
-    <span aria-hidden="true">·</span>
-    <a href="https://github.com/fomothy/denly.xyz">Watch the repo</a>
-  </p>
-</main>
+<footer>
+  <div class="wrap">
+    <div class="f-left"><img src="/denly-fox-mark.png" alt="" class="f-mark" width="106" height="128"> denly — your den on the internet. AGPLv3.</div>
+    <div class="f-links">
+      <a href="https://github.com/fomothy/denly.xyz" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://x.com/denlyhq" target="_blank" rel="noopener">X</a>
+      <a href="mailto:denly.xyz@protonmail.com">Contact</a>
+    </div>
+  </div>
+</footer>
 
 </body>
 </html>
