@@ -1,0 +1,164 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Lets a release be cut with confidence that main was green.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The plan ships macOS, Linux, and Windows binaries, so all three are
+        # tested. The data-directory logic in particular differs per platform.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          check-latest: true
+
+      - name: Verify dependencies
+        run: |
+          go mod download
+          go mod verify
+
+      - name: Check go.mod is tidy
+        # A stale go.mod breaks reproducible builds and surprises contributors.
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -shuffle=on -coverprofile=coverage.out ./...
+
+      - name: Coverage summary
+        if: matrix.os == 'ubuntu-latest'
+        run: go tool cover -func=coverage.out | tail -1 >> "$GITHUB_STEP_SUMMARY"
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  shell:
+    name: Shellcheck install.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck install.sh
+
+      # The installer runs on machines that may only have /bin/sh. Catch
+      # accidental bashisms before a user does.
+      - name: POSIX syntax check
+        run: |
+          dash -n install.sh
+          echo "install.sh parses under dash"
+
+  cross-compile:
+    name: Cross-compile all targets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      # Guards the pure-Go SQLite invariant: if anything pulls in cgo, this
+      # fails here rather than during a release.
+      - name: Build every release target
+        env:
+          CGO_ENABLED: 0
+        run: |
+          set -eux
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
+            GOOS=${target%/*} GOARCH=${target#*/} \
+              go build -trimpath -o /dev/null ./cmd/denly
+          done
+
+  goreleaser-check:
+    name: Validate .goreleaser.yml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: check
+
+  smoke:
+    name: Smoke test (serve and curl)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      # The exit criterion for Phase 0 is that the binary actually serves a
+      # page. Assert it on every commit, not just at release time.
+      - name: Build and serve
+        run: |
+          set -eux
+          CGO_ENABLED=0 go build -o ./denly ./cmd/denly
+          export DENLY_DATA_DIR="${RUNNER_TEMP}/denly-data"
+          ./denly serve -addr 127.0.0.1:8737 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for _ in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:8737/healthz >/dev/null 2>&1; then break; fi
+            sleep 0.2
+          done
+
+          curl -fsS http://127.0.0.1:8737/healthz | tee /dev/stderr | grep -q '"status":"ok"'
+          curl -fsS http://127.0.0.1:8737/ | grep -q "Your den is running"
+          curl -fsS http://127.0.0.1:8737/static/style.css >/dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8737/nope)" = "404"
+
+          # A clean SIGTERM must exit 0, or systemd will report every stop as a
+          # failure.
+          kill -TERM "$SERVER_PID"
+          wait "$SERVER_PID"
+          echo "smoke test passed"

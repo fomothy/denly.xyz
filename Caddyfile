@@ -1,0 +1,35 @@
+# Caddy reverse proxy for a public denly instance.
+#
+# Replace denly.example.com with your domain, point its A/AAAA record at this
+# host, then:
+#
+#   docker compose --profile public up -d
+#
+# Caddy provisions and renews a Let's Encrypt certificate automatically. No
+# certbot, no cron, no manual renewal.
+
+denly.example.com {
+	reverse_proxy denly:8737
+
+	encode zstd gzip
+
+	header {
+		# HSTS. Only meaningful once you are confident the domain will stay on
+		# HTTPS — a browser that sees this will refuse plain HTTP for a year.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# denly sets its own CSP, referrer, and frame policy; do not duplicate
+		# them here or the two will drift.
+		-Server
+	}
+
+	log {
+		output stderr
+		format console
+	}
+}
+
+# Local development over HTTPS with a locally-trusted certificate:
+#
+# denly.localhost {
+# 	reverse_proxy denly:8737
+# }

@@ -1,0 +1,18 @@
+# Local bindings for `wrangler pages dev`. Copy to .dev.vars and fill in.
+#
+#   cp .dev.vars.example .dev.vars
+#
+# .dev.vars is gitignored. This file, with placeholders only, is not — so never
+# put a real key here.
+
+# From https://resend.com/api-keys — needs Contacts write permission,
+# not just sending access.
+RESEND_API_KEY=re_your_key_here
+
+# Optional. Tags waitlist signups into a segment.
+# RESEND_SEGMENT_ID=
+
+# Optional, testing only. Points the function at a mock instead of the real
+# Resend API, so you can exercise the success and duplicate paths without
+# writing to your actual contact list. Leave commented out to hit Resend.
+# RESEND_CONTACTS_ENDPOINT=http://127.0.0.1:8141/contacts

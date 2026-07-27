@@ -1,0 +1,35 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - errorlint     # catches == comparisons that should be errors.Is
+    - gosec
+    - misspell
+    - nilerr
+    - revive
+    - unconvert
+    - unparam
+    - whitespace
+
+  settings:
+    gosec:
+      excludes:
+        # G104 duplicates errcheck. The deliberate ignores in this codebase are
+        # annotated at the call site.
+        - G104
+
+  exclusions:
+    rules:
+      # Tests trade some rigor for readability: fixture helpers panic instead
+      # of threading errors, and table-driven cases repeat themselves.
+      - path: _test\.go
+        linters:
+          - gosec
+          - unparam
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

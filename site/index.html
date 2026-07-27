@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>denly — your den on the internet</title>
+<meta name="description" content="A single binary you run on your own machine: a presence page, encrypted file drops, and a dead man's switch. Your keys never leave.">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://denly.xyz">
+<meta property="og:title" content="denly — your den on the internet">
+<meta property="og:description" content="A single binary you run on your own machine: a presence page, encrypted file drops, and a dead man's switch. Your keys never leave.">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <a class="wordmark" href="/" aria-label="denly home">
+    <svg class="keyhole" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="6" r="2.6"/>
+      <path d="M6 8.6 L4.6 14 h2.8 z"/>
+    </svg>
+    denly
+  </a>
+  <a class="bar-link" href="https://github.com/fomothy/denly.xyz">source on github ↗</a>
+</header>
+
+<main id="main">
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>your den on the internet.</h1>
+
+    <p class="lede">
+      A single binary you run on your own machine. It gives you a page that's
+      yours, encrypted file transfer, and a dead man's switch — anchored to open
+      protocols instead of anyone's platform.
+    </p>
+
+    <div class="plate-wrap">
+      <div class="plate">
+        <code id="install-cmd">curl -fsSL https://denly.xyz/install.sh | sh</code>
+        <button type="button" class="copy" data-copy="#install-cmd">
+          <span class="copy-label">copy</span>
+        </button>
+      </div>
+      <p class="plate-note">
+        <span class="dot" aria-hidden="true"></span>
+        Not released yet. That line is the entire install, once there's something
+        to install.
+      </p>
+    </div>
+  </section>
+
+  <div class="seam" role="presentation">
+    <svg class="seam-mark" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="6" r="2.6"/>
+      <path d="M6 8.6 L4.6 14 h2.8 z"/>
+    </svg>
+  </div>
+
+  <!-- What it is -->
+  <section class="block">
+    <p class="eyebrow">what it is</p>
+
+    <div class="grid">
+      <article class="item">
+        <h2>A page that's yours</h2>
+        <p>
+          Your bio, links, and writing, at your own domain. Markdown in, plain
+          HTML out — export the whole thing and walk away whenever you want.
+        </p>
+      </article>
+
+      <article class="item">
+        <h2>Drops</h2>
+        <p>
+          Send someone a file. It's encrypted in your browser before it leaves.
+          The key rides in the link, so the server only ever holds ciphertext.
+        </p>
+      </article>
+
+      <article class="item">
+        <h2>Deadhand</h2>
+        <p>
+          A dead man's switch. Check in on whatever schedule you set. Miss enough
+          check-ins and an encrypted payload goes to the people you chose.
+        </p>
+      </article>
+
+      <article class="item">
+        <h2>Your keys</h2>
+        <p>
+          Generated on your machine, stored on your machine, never transmitted.
+          Losing the server never means losing the keys.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <div class="seam" role="presentation">
+    <svg class="seam-mark" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="6" r="2.6"/>
+      <path d="M6 8.6 L4.6 14 h2.8 z"/>
+    </svg>
+  </div>
+
+  <!-- The invariant -->
+  <section class="block">
+    <p class="eyebrow">the one rule everything is built around</p>
+
+    <div class="diagram-scroll">
+<!-- Pure ASCII on purpose: box-drawing and triangle glyphs are not all one
+     cell wide, so a diagram built from them falls out of alignment in most
+     monospace fonts. -->
+<pre class="diagram" aria-label="Diagram: your browser encrypts data into ciphertext, the server stores the ciphertext, and keys never leave your browser.">
+ your browser --encrypts--> ciphertext --> server stores it
+ ^                                                        |
+ +---------------- keys never leave here -----------------+
+</pre>
+    </div>
+
+    <p class="after-diagram">
+      Whoever runs the server — you, or anyone else — holds
+      <strong>availability, not secrets</strong>. It's a constraint on the
+      architecture, not a promise in a privacy policy.
+    </p>
+  </section>
+
+  <div class="seam" role="presentation">
+    <svg class="seam-mark" viewBox="0 0 12 16" aria-hidden="true" focusable="false">
+      <circle cx="6" cy="6" r="2.6"/>
+      <path d="M6 8.6 L4.6 14 h2.8 z"/>
+    </svg>
+  </div>
+
+  <!-- Waitlist -->
+  <section class="block signup">
+    <p class="eyebrow">waitlist</p>
+    <h2 class="signup-h">Hear about it when it ships</h2>
+    <p class="signup-sub">
+      One email when there's a release worth installing. No drip sequence, no
+      newsletter.
+    </p>
+
+    <!--
+      Posts to our own Pages Function, which forwards to Resend. A plain form
+      POST, so it works with JavaScript disabled; app.js upgrades it to submit
+      in place.
+    -->
+    <form class="form" action="/api/subscribe" method="post">
+      <label class="visually-hidden" for="email">Email address</label>
+      <input id="email"
+             type="email"
+             name="email"
+             inputmode="email"
+             autocomplete="email"
+             placeholder="you@example.com"
+             required>
+
+      <!-- Honeypot. Hidden from people, filled in by naive bots. -->
+      <div class="visually-hidden" aria-hidden="true">
+        <label for="hp-check">Leave this field empty</label>
+        <input id="hp-check" type="text" name="hp_check" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button type="submit">Join the waitlist</button>
+    </form>
+
+    <p class="form-note" id="form-status" role="status">
+      Your address goes to Resend and nowhere else. Unsubscribe in one click.
+    </p>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p class="foot-status">
+    <span class="pip" aria-hidden="true"></span>
+    Phase 0 is built and open source: the binary, storage, release pipeline, and
+    installer all work. Features come next.
+  </p>
+  <p class="foot-links">
+    <a href="https://github.com/fomothy/denly.xyz">github</a>
+    <span aria-hidden="true">·</span>
+    <a href="https://github.com/fomothy/denly.xyz/blob/main/LICENSE">AGPL-3.0</a>
+    <span aria-hidden="true">·</span>
+    built in public
+  </p>
+</footer>
+
+<script src="/app.js" defer></script>
+</body>
+</html>

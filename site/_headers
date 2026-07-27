@@ -1,0 +1,19 @@
+# Cloudflare Pages response headers.
+#
+# The CSP has no 'unsafe-inline' because the CSS and JS live in their own
+# files. Worth keeping that way: a privacy tool whose own site needs inline
+# script exemptions is a bad look, and the cost of separate files is nil.
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
+  Content-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'
+
+# The whole point of the install line is that it works. Serve the script as
+# plain text so a browser shows it instead of downloading it — people should
+# be able to read what they are about to pipe into a shell.
+/install.sh
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=300

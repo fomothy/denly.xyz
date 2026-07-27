@@ -1,0 +1,185 @@
+/* denly — Phase 0 status page.
+   Warm, low-contrast, "den"-like. System fonts only: no external requests,
+   so the page renders identically offline, over Tor, and air-gapped. */
+
+:root {
+  --bg: #12100e;
+  --bg-card: #1a1714;
+  --line: #2e2823;
+  --ink: #ede7e0;
+  --ink-dim: #a89e93;
+  --ink-faint: #7a7167;
+  --amber: #e0a458;
+  --green: #7fa86f;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #faf7f2;
+    --bg-card: #ffffff;
+    --line: #e6ded2;
+    --ink: #241f1a;
+    --ink-dim: #5d5449;
+    --ink-faint: #8b8177;
+    --amber: #a06a1f;
+    --green: #4a6b3d;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem 1.25rem 4rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+               "Liberation Mono", monospace;
+  font-size: 0.875em;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+}
+
+.wrap { max-width: 44rem; margin: 0 auto; }
+
+/* Header */
+.head { margin-bottom: 2.5rem; }
+
+.mark {
+  width: 34px; height: 34px;
+  margin-bottom: 1.25rem;
+  border: 2px solid var(--amber);
+  border-radius: 9px 9px 3px 3px;
+  position: relative;
+}
+/* A keyhole: the mark is a door, the dot-and-slot is what only you hold. */
+.mark::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 52%;
+  transform: translate(-50%, -50%);
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 5px 0 -1px var(--amber);
+}
+
+h1 {
+  margin: 0 0 0.6rem;
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+}
+
+.sub { margin: 0; color: var(--ink-dim); max-width: 34rem; }
+.sub strong { color: var(--ink); font-weight: 600; }
+
+/* Cards */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.card h2 {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Status rows */
+.rows { margin: 0; }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--line);
+}
+.row:first-child { border-top: 0; padding-top: 0; }
+
+.row dt {
+  flex: 0 0 9.5rem;
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+.row dd { margin: 0; flex: 1 1 12rem; min-width: 0; }
+
+.wrapme { overflow-wrap: anywhere; }
+
+.tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1em 0.5em;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--amber);
+  border: 1px solid color-mix(in srgb, var(--amber) 40%, transparent);
+  border-radius: 99px;
+  vertical-align: 1px;
+}
+
+/* Feature checklist */
+.note { margin: 0 0 1rem; color: var(--ink-dim); font-size: 0.925rem; }
+
+.checks { list-style: none; margin: 0; padding: 0; }
+
+.checks li {
+  position: relative;
+  padding: 0.3rem 0 0.3rem 1.75rem;
+  font-size: 0.94rem;
+}
+.checks li::before {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+}
+.checks .done::before { content: "✓"; color: var(--green); }
+.checks .done { color: var(--ink); }
+.checks .todo::before { content: "○"; color: var(--ink-faint); }
+.checks .todo { color: var(--ink-faint); }
+
+.phase {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 0.05em 0.5em;
+  margin-left: 0.3rem;
+}
+
+/* Footer */
+.foot {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+.foot p { margin: 0 0 0.5rem; }
+.foot strong { color: var(--ink); font-weight: 600; }
+.thin { color: var(--ink-faint); font-size: 0.85rem; }
+
+a { color: var(--amber); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 3px; }
+
+@media (max-width: 30rem) {
+  .row dt { flex-basis: 100%; }
+}

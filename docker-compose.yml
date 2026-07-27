@@ -1,0 +1,77 @@
+# denly — homelab deployment.
+#
+#   docker compose up -d
+#
+# Then open http://localhost:8737
+#
+# Data lives in ./data next to this file: back that directory up and you have
+# backed up everything. To move to another machine, copy ./data across.
+
+services:
+  denly:
+    image: ghcr.io/fomothy/denly:latest
+    container_name: denly
+    restart: unless-stopped
+
+    # Published on loopback only. A fresh instance holds your keys; make
+    # reaching it from the network a deliberate act. To expose it, either put a
+    # reverse proxy in front (see the caddy profile below) or change this to
+    # "8737:8737".
+    ports:
+      - "127.0.0.1:8737:8737"
+
+    volumes:
+      - ./data:/data
+
+    environment:
+      DENLY_DATA_DIR: /data
+      DENLY_ADDR: 0.0.0.0:8737
+
+    # The image runs as uid 65532 (distroless nonroot). If ./data was created
+    # by root, the container cannot write to it; fix with:
+    #   sudo chown -R 65532:65532 ./data
+    user: "65532:65532"
+
+    healthcheck:
+      # distroless has no shell and no curl, so the healthcheck uses the binary
+      # itself. `version` exercises the process without needing the network.
+      test: ["CMD", "/usr/local/bin/denly", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+# Optional: automatic TLS on a public domain.
+#
+#   1. Point your domain's A record at this host
+#   2. Edit Caddyfile with your domain
+#   3. docker compose --profile public up -d
+#
+# Caddy obtains and renews certificates automatically.
+  caddy:
+    image: caddy:2-alpine
+    container_name: denly-caddy
+    restart: unless-stopped
+    profiles: ["public"]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - denly
+
+volumes:
+  caddy_data:
+  caddy_config:

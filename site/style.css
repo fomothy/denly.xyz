@@ -1,0 +1,448 @@
+/* denly.xyz — landing page.
+   Dark and warm on purpose: a den is somewhere you go in, not a dashboard.
+   No external fonts and no third-party scripts — a privacy tool that phones
+   home for its typography has already lost the argument. */
+
+:root {
+  --soot:       #100d0a;  /* the den, unlit */
+  --den:        #191410;  /* raised surface */
+  --seam:       #2a221b;  /* hairlines */
+  --seam-lit:   #3a2e23;
+  --tallow:     #efe6d8;  /* candlelight on paper */
+  --ash:        #9c9085;  /* secondary text — 6.2:1 on soot */
+  /* Tertiary text. Carries real information ("Not released yet"), so it has to
+     clear WCAG AA at 4.5:1 rather than just look quiet — 4.6:1 on soot. */
+  --dim:        #857a6d;
+  --brass:      #e0a458;  /* the key metal — matches the app's accent */
+  --brass-deep: #b87a34;
+  --moss:       #7fa86f;  /* only ever means "working" */
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+
+  --shell: 46rem;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--soot);
+  color: var(--tallow);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+
+  /* Warm light spilling from somewhere above and behind — the one ambient
+     flourish on the page. */
+  background-image:
+    radial-gradient(60rem 32rem at 50% -14rem,
+      rgba(224, 164, 88, 0.13), transparent 70%);
+  background-repeat: no-repeat;
+}
+
+a { color: var(--brass); text-underline-offset: 3px; }
+a:hover { color: #f0bd7c; }
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+.skip:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 10;
+  background: var(--den);
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--seam-lit);
+  border-radius: 8px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------- bar ---- */
+
+.bar {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: var(--tallow);
+  text-decoration: none;
+}
+
+.keyhole { width: 11px; height: 15px; fill: var(--brass); flex: none; }
+
+.bar-link {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--ash);
+  text-decoration: none;
+}
+.bar-link:hover { color: var(--brass); }
+
+/* --------------------------------------------------------------- hero ---- */
+
+.hero {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 5rem 1.5rem 4rem;
+}
+
+h1 {
+  margin: 0 0 1.5rem;
+  font-family: var(--mono);
+  font-size: clamp(2.1rem, 7.5vw, 4rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  color: var(--tallow);
+}
+
+.lede {
+  margin: 0 0 2.75rem;
+  max-width: 34rem;
+  font-size: clamp(1.02rem, 2.2vw, 1.18rem);
+  color: var(--ash);
+}
+
+/* The install line, treated as a physical object: the product's whole promise
+   is that it fits on one line. */
+.plate-wrap { max-width: 38rem; }
+
+.plate {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1rem 1rem 1.15rem;
+  background: var(--den);
+  border: 1px solid var(--seam-lit);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(224, 164, 88, 0.06),
+    0 18px 50px -28px rgba(224, 164, 88, 0.5);
+  overflow: hidden;
+}
+
+.plate code {
+  font-family: var(--mono);
+  font-size: clamp(0.76rem, 2.5vw, 0.92rem);
+  color: var(--tallow);
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.plate code::-webkit-scrollbar { display: none; }
+
+.copy {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ash);
+  background: transparent;
+  border: 1px solid var(--seam-lit);
+  border-radius: 6px;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.copy:hover { color: var(--brass); border-color: var(--brass-deep); }
+.copy.done { color: var(--moss); border-color: var(--moss); }
+
+.plate-note {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  margin: 0.9rem 0 0;
+  font-size: 0.875rem;
+  color: var(--dim);
+}
+
+.dot {
+  flex: none;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brass);
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------------------------- seam ---- */
+
+/* A door seam rather than a plain rule: the sections are rooms. */
+.seam {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.seam::before,
+.seam::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--seam);
+}
+.seam-mark { width: 9px; height: 12px; fill: var(--seam-lit); flex: none; }
+
+/* ------------------------------------------------------------- blocks ---- */
+
+.block {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 1.75rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 2.25rem 2.5rem;
+}
+
+.item h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  color: var(--tallow);
+}
+.item p {
+  margin: 0;
+  font-size: 0.94rem;
+  color: var(--ash);
+}
+
+/* ------------------------------------------------------------ diagram ---- */
+
+.diagram-scroll { overflow-x: auto; padding-bottom: 0.5rem; }
+
+.diagram {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: clamp(0.66rem, 2.1vw, 0.82rem);
+  line-height: 1.7;
+  color: var(--ash);
+  white-space: pre;
+}
+
+.after-diagram {
+  margin: 1.75rem 0 0;
+  max-width: 34rem;
+  font-size: 0.94rem;
+  color: var(--ash);
+}
+.after-diagram strong { color: var(--tallow); font-weight: 620; }
+
+/* ------------------------------------------------------------- signup ---- */
+
+.signup-h {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.35rem, 4vw, 1.7rem);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  color: var(--tallow);
+}
+
+.signup-sub {
+  margin: 0 0 1.75rem;
+  max-width: 30rem;
+  color: var(--ash);
+  font-size: 0.96rem;
+}
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  max-width: 32rem;
+}
+
+.form input {
+  flex: 1 1 14rem;
+  min-width: 0;
+  padding: 0.75rem 0.9rem;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--tallow);
+  background: var(--den);
+  border: 1px solid var(--seam-lit);
+  border-radius: 8px;
+}
+.form input::placeholder { color: var(--dim); }
+.form input:focus { border-color: var(--brass-deep); }
+
+.form button {
+  flex: 0 0 auto;
+  padding: 0.75rem 1.15rem;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1208;
+  background: var(--brass);
+  border: 1px solid var(--brass);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.form button:hover { background: #f0bd7c; }
+
+.form-note {
+  margin: 0.9rem 0 0;
+  font-size: 0.82rem;
+  color: var(--dim);
+}
+
+/* The status line doubles as the form's live region. Colour is never the only
+   signal — the wording changes too, for anyone who cannot see the difference. */
+.form-note.is-success { color: var(--moss); }
+.form-note.is-error { color: #e08a6a; }
+
+.form input:disabled,
+.form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ------------------------------------------------------------ outcome ---- */
+
+/* /thanks and the function's error page. */
+.outcome { padding-top: 5rem; padding-bottom: 5rem; }
+
+.outcome-h {
+  margin: 0 0 0.75rem;
+  font-family: var(--mono);
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  color: var(--tallow);
+}
+
+.outcome-sub {
+  margin: 0 0 1.75rem;
+  max-width: 30rem;
+  color: var(--ash);
+}
+
+.outcome-links {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--dim);
+}
+
+/* --------------------------------------------------------------- foot ---- */
+
+.foot {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  border-top: 1px solid var(--seam);
+}
+
+.foot-status {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+  max-width: 34rem;
+  font-size: 0.86rem;
+  color: var(--dim);
+}
+
+.pip {
+  flex: none;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--moss);
+  transform: translateY(-2px);
+}
+
+.foot-links {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+.foot-links a { text-decoration: none; }
+.foot-links a:hover { text-decoration: underline; }
+
+/* --------------------------------------------------------- responsive ---- */
+
+@media (max-width: 34rem) {
+  .hero { padding-top: 3.5rem; padding-bottom: 3rem; }
+  .block { padding-top: 2.75rem; padding-bottom: 2.75rem; }
+  .form button { flex: 1 1 100%; }
+
+  /* The install line is the hero. On a phone it does not fit on one line, and
+     a command that scrolls out of view sideways reads as broken — so wrap it
+     and move the copy button beneath. */
+  .plate {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+  .plate code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow-x: visible;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # create the GitHub Release and upload artifacts
+  packages: write   # push images to ghcr.io
+  id-token: write   # cosign keyless signing via OIDC
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # GoReleaser needs full history to build the changelog between tags.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          check-latest: true
+
+      # Never publish a tag that does not pass its own tests. A bad release is
+      # far more expensive to retract than to prevent — install.sh points at
+      # "latest" and users get it within minutes.
+      - name: Test before releasing
+        run: go test -race ./...
+
+      - uses: sigstore/cosign-installer@v3
+
+      - uses: anchore/sbom-action/download-syft@v0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  verify:
+    name: Verify the published installer path
+    runs-on: ${{ matrix.os }}
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Phase 0's exit criterion is that `curl | sh` works on a clean machine.
+      # This installs the release that was just published, from the real
+      # artifacts, and runs it — so a broken installer is caught by us rather
+      # than by the first person who tries it.
+      - name: Install from the published release and serve
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eux
+          sh ./install.sh --version "$TAG" --no-service --bin-dir "$HOME/.local/bin"
+
+          export PATH="$HOME/.local/bin:$PATH"
+          denly version
+
+          export DENLY_DATA_DIR="${RUNNER_TEMP}/denly-verify"
+          denly serve -addr 127.0.0.1:8737 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          for _ in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:8737/healthz >/dev/null 2>&1; then break; fi
+            sleep 0.2
+          done
+
+          curl -fsS http://127.0.0.1:8737/healthz | grep -q '"status":"ok"'
+          curl -fsS http://127.0.0.1:8737/ | grep -q "Your den is running"
+          echo "installer verified on ${{ matrix.os }}"

@@ -1,0 +1,179 @@
+# GoReleaser configuration for denly.
+#
+# CGO is off everywhere: the SQLite driver is pure Go, so every target
+# cross-compiles from a single Linux runner with no C toolchains and produces a
+# genuinely static binary. Keep it that way — adding a cgo dependency would
+# require per-target runners and break the "one binary, no dependencies" promise.
+version: 2
+
+project_name: denly
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod verify
+
+builds:
+  - id: denly
+    main: ./cmd/denly
+    binary: denly
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      # Windows on ARM is not a target the plan cares about yet.
+      - goos: windows
+        goarch: arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/fomothy/denly.xyz/internal/buildinfo.Version={{ .Version }}
+      - -X github.com/fomothy/denly.xyz/internal/buildinfo.Commit={{ .FullCommit }}
+      - -X github.com/fomothy/denly.xyz/internal/buildinfo.Date={{ .CommitDate }}
+    # Reproducible builds: stamp the commit date rather than "now", so two
+    # builds of the same tag are byte-identical and independently verifiable.
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: denly
+    ids:
+      - denly
+    # install.sh parses these names. Changing the pattern breaks every existing
+    # installer invocation, so treat it as a public interface.
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+# Cosign keyless signing via GitHub Actions OIDC. Anyone can verify a release
+# came from this repo's workflow without trusting a long-lived key.
+signs:
+  - cmd: cosign
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum
+    output: true
+
+# `goreleaser check` warns that `dockers` + `docker_manifests` will eventually
+# be replaced by `dockers_v2`. Staying on the stable schema deliberately:
+# dockers_v2 is marked experimental, its name is provisional, and it is renamed
+# again in GoReleaser v3 (no ETA). Migrating means one multi-platform entry with
+# $TARGETPLATFORM in the Dockerfile instead of the two entries plus manifest
+# below — worth doing once it stabilises, not while releases depend on it.
+dockers:
+  - id: denly-amd64
+    ids: [denly]
+    goarch: amd64
+    dockerfile: Dockerfile
+    use: buildx
+    image_templates:
+      - "ghcr.io/fomothy/denly:{{ .Version }}-amd64"
+      - "ghcr.io/fomothy/denly:latest-amd64"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.created={{ .CommitDate }}"
+      - "--label=org.opencontainers.image.source=https://github.com/fomothy/denly.xyz"
+      - "--label=org.opencontainers.image.licenses=AGPL-3.0-only"
+
+  - id: denly-arm64
+    ids: [denly]
+    goarch: arm64
+    dockerfile: Dockerfile
+    use: buildx
+    image_templates:
+      - "ghcr.io/fomothy/denly:{{ .Version }}-arm64"
+      - "ghcr.io/fomothy/denly:latest-arm64"
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
+      - "--label=org.opencontainers.image.created={{ .CommitDate }}"
+      - "--label=org.opencontainers.image.source=https://github.com/fomothy/denly.xyz"
+      - "--label=org.opencontainers.image.licenses=AGPL-3.0-only"
+
+docker_manifests:
+  - name_template: "ghcr.io/fomothy/denly:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/fomothy/denly:{{ .Version }}-amd64"
+      - "ghcr.io/fomothy/denly:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/fomothy/denly:latest"
+    image_templates:
+      - "ghcr.io/fomothy/denly:latest-amd64"
+      - "ghcr.io/fomothy/denly:latest-arm64"
+
+sboms:
+  - artifacts: archive
+
+changelog:
+  sort: asc
+  use: github
+  groups:
+    - title: Features
+      regexp: '^feat(\(.+\))?:'
+      order: 0
+    - title: Fixes
+      regexp: '^fix(\(.+\))?:'
+      order: 1
+    - title: Security
+      regexp: '^sec(urity)?(\(.+\))?:'
+      order: 2
+    - title: Other
+      order: 99
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+
+release:
+  github:
+    owner: fomothy
+    name: denly.xyz
+  draft: false
+  prerelease: auto
+  header: |
+    ## denly {{ .Tag }}
+
+    Install:
+
+    ```sh
+    curl -fsSL https://denly.xyz/install.sh | sh
+    ```
+  footer: |
+    ---
+
+    Verify the checksums signature with cosign:
+
+    ```sh
+    cosign verify-blob checksums.txt \
+      --certificate checksums.txt.pem \
+      --signature checksums.txt.sig \
+      --certificate-identity-regexp 'https://github.com/fomothy/denly.xyz/.*' \
+      --certificate-oidc-issuer https://token.actions.githubusercontent.com
+    ```

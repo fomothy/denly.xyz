@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your den is running — denly</title>
+<meta name="description" content="A denly instance is running on this machine.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<main class="wrap">
+
+  <header class="head">
+    <div class="mark" aria-hidden="true"></div>
+    <h1>Your den is running.</h1>
+    <p class="sub">
+      This machine is now serving <strong>denly</strong>. Nothing is public yet —
+      it is listening on <code>{{ .Addr }}</code> and holds nothing but an empty database.
+    </p>
+  </header>
+
+  <section class="card" aria-labelledby="status-h">
+    <h2 id="status-h">Status</h2>
+    <dl class="rows">
+      <div class="row">
+        <dt>Version</dt>
+        <dd><code>{{ .Build.Version }}</code>{{ if not .IsRelease }} <span class="tag">unreleased build</span>{{ end }}</dd>
+      </div>
+      <div class="row">
+        <dt>Commit</dt>
+        <dd><code>{{ .ShortCommit }}</code></dd>
+      </div>
+      <div class="row">
+        <dt>Platform</dt>
+        <dd><code>{{ .Build.Platform }}</code> · {{ .Build.GoVersion }}</dd>
+      </div>
+      <div class="row">
+        <dt>Data directory</dt>
+        <dd><code class="wrapme">{{ .DataDir }}</code></dd>
+      </div>
+      <div class="row">
+        <dt>Database</dt>
+        <dd>SQLite · schema v{{ .SchemaVersion }} · journal {{ .JournalMode }}</dd>
+      </div>
+      <div class="row">
+        <dt>Uptime</dt>
+        <dd>{{ .Uptime }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="card" aria-labelledby="next-h">
+    <h2 id="next-h">What works today</h2>
+    <p class="note">
+      This is the Phase&nbsp;0 skeleton. The binary serves, stores, and upgrades itself
+      cleanly — the features come next.
+    </p>
+    <ul class="checks">
+      <li class="done">Single static binary, no runtime dependencies</li>
+      <li class="done">Embedded SQLite with WAL and versioned migrations</li>
+      <li class="done">Frontend compiled into the binary</li>
+      <li class="todo">Identity &amp; presence page <span class="phase">Phase 1</span></li>
+      <li class="todo">Encrypted drops <span class="phase">Phase 1</span></li>
+      <li class="todo">Deadhand switch <span class="phase">Phase 2</span></li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <p>
+      Your keys never leave this machine.
+      denly holds <strong>availability, not secrets</strong>.
+    </p>
+    <p class="thin">
+      <a href="/healthz">/healthz</a> ·
+      <a href="https://denly.xyz">denly.xyz</a> ·
+      AGPL-3.0
+    </p>
+  </footer>
+
+</main>
+</body>
+</html>

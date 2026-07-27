@@ -1,0 +1,41 @@
+# Self-contained build, for `docker build -f Dockerfile.local .` without
+# GoReleaser. The published images come from Dockerfile; this one exists so
+# contributors and homelab users can build from source directly.
+
+FROM golang:1.26-alpine AS build
+
+WORKDIR /src
+
+# Copy manifests first so dependency download is cached independently of source
+# changes.
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+ARG VERSION=dev
+ARG COMMIT=none
+ARG DATE=unknown
+
+RUN CGO_ENABLED=0 go build \
+      -trimpath \
+      -ldflags="-s -w \
+        -X github.com/fomothy/denly.xyz/internal/buildinfo.Version=${VERSION} \
+        -X github.com/fomothy/denly.xyz/internal/buildinfo.Commit=${COMMIT} \
+        -X github.com/fomothy/denly.xyz/internal/buildinfo.Date=${DATE}" \
+      -o /out/denly ./cmd/denly
+
+FROM gcr.io/distroless/static-debian12:nonroot
+
+COPY --from=build /out/denly /usr/local/bin/denly
+
+ENV DENLY_DATA_DIR=/data \
+    DENLY_ADDR=0.0.0.0:8737
+
+VOLUME ["/data"]
+EXPOSE 8737
+
+USER nonroot:nonroot
+
+ENTRYPOINT ["/usr/local/bin/denly"]
+CMD ["serve"]
