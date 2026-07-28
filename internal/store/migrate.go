@@ -118,6 +118,83 @@ var migrations = []migration{
 			CREATE INDEX idx_receive_status ON receive_requests (status, created_at);
 		`,
 	},
+	{
+		version: 3,
+		name:    "deadhand",
+		sql: `
+			-- A dead man's switch. The server holds the sealed payload and the
+			-- schedule; it holds no content key, no recipient secret, and never
+			-- enough guardian shares to combine.
+			--
+			-- payload is the JSON-encoded SealedPayload: ciphertext plus one
+			-- wrap per recipient plus encrypted guardian shares. There is no
+			-- column for a message, a filename, or a key, and there should
+			-- never be one.
+			CREATE TABLE switches (
+				id                TEXT PRIMARY KEY,
+				name              TEXT NOT NULL,
+				payload           BLOB NOT NULL,
+				payload_bytes     INTEGER NOT NULL,
+
+				-- Schedule, in seconds. grace is the extra time after a missed
+				-- check-in before anything fires, so a holiday is not a death.
+				checkin_interval  INTEGER NOT NULL,
+				grace_period      INTEGER NOT NULL,
+
+				state             TEXT NOT NULL DEFAULT 'disarmed',
+				last_checkin_at   TEXT,
+				armed_at          TEXT,
+				fired_at          TEXT,
+
+				-- Where the payload went when it fired.
+				release_cid       TEXT NOT NULL DEFAULT '',
+				release_tx        TEXT NOT NULL DEFAULT '',
+				-- Whether firing publishes a "this switch fired" notice with no
+				-- content. Opt-in: some switches should fire silently.
+				public_notice     INTEGER NOT NULL DEFAULT 0,
+
+				threshold         INTEGER NOT NULL DEFAULT 0,
+				created_at        TEXT NOT NULL,
+				updated_at        TEXT NOT NULL
+			) STRICT;
+			CREATE INDEX idx_switches_state ON switches (state);
+
+			-- Where escalation reminders go. Addresses are stored so denly can
+			-- nudge before firing; a trusted contact is nudged last, before
+			-- release, so someone who knows you can intervene.
+			CREATE TABLE switch_contacts (
+				id         INTEGER PRIMARY KEY AUTOINCREMENT,
+				switch_id  TEXT NOT NULL REFERENCES switches(id) ON DELETE CASCADE,
+				kind       TEXT NOT NULL,
+				address    TEXT NOT NULL,
+				trusted    INTEGER NOT NULL DEFAULT 0,
+				created_at TEXT NOT NULL
+			) STRICT;
+			CREATE INDEX idx_switch_contacts ON switch_contacts (switch_id);
+
+			-- Every check-in, reminder, drill, and release. This is the liveness
+			-- record the owner reads to decide whether they trust the machinery,
+			-- so it is deliberately append-only and never swept.
+			CREATE TABLE switch_events (
+				id         INTEGER PRIMARY KEY AUTOINCREMENT,
+				switch_id  TEXT NOT NULL REFERENCES switches(id) ON DELETE CASCADE,
+				kind       TEXT NOT NULL,
+				detail     TEXT NOT NULL DEFAULT '',
+				at         TEXT NOT NULL
+			) STRICT;
+			CREATE INDEX idx_switch_events ON switch_events (switch_id, at DESC);
+
+			-- Reminders already sent in the current missed-check-in cycle, so a
+			-- restart does not re-send them and a sweep does not spam.
+			CREATE TABLE switch_reminders (
+				switch_id  TEXT NOT NULL REFERENCES switches(id) ON DELETE CASCADE,
+				stage      INTEGER NOT NULL,
+				cycle      TEXT NOT NULL,
+				sent_at    TEXT NOT NULL,
+				PRIMARY KEY (switch_id, stage, cycle)
+			) STRICT;
+		`,
+	},
 }
 
 // SchemaVersion returns the version the database is currently migrated to.

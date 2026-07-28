@@ -18,6 +18,7 @@ import (
 	"github.com/fomothy/denly.xyz/internal/backup"
 	"github.com/fomothy/denly.xyz/internal/buildinfo"
 	"github.com/fomothy/denly.xyz/internal/config"
+	"github.com/fomothy/denly.xyz/internal/deadhand"
 	"github.com/fomothy/denly.xyz/internal/drop"
 	"github.com/fomothy/denly.xyz/internal/identity"
 	"github.com/fomothy/denly.xyz/internal/keyring"
@@ -38,6 +39,7 @@ Commands:
   serve      Run the denly server
   whoami     Print this instance's identity
   drop       Encrypt a file locally and upload the ciphertext
+  deadhand   Manage dead man's switches
   publish    Pin the public presence page to IPFS
   backup     Write an encrypted archive of the data directory
   restore    Restore an encrypted archive
@@ -79,6 +81,8 @@ func run(args []string) error {
 		return runWhoami(args[1:])
 	case "drop":
 		return runDrop(args[1:])
+	case "deadhand":
+		return runDeadhand(args[1:])
 	case "publish":
 		return runPublish(args[1:])
 	case "backup":
@@ -161,13 +165,28 @@ func runServe(args []string) error {
 	prof := profile.New(st)
 	pinner := newPinner(cfg, log)
 
+	switches := deadhand.NewStore(st)
+	engine := deadhand.NewEngine(switches, buildNotifier(cfg), buildReleaser(cfg), log)
+
+	var ownerSecret *nostr.PrivateKey
+	if keyring.Exists(cfg.DataDir) {
+		k, err := keyring.Load(cfg.DataDir)
+		if err != nil {
+			return err
+		}
+		ownerSecret = k.PrivateKey()
+	}
+
 	srv, err := server.New(cfg, st, log, server.Deps{
-		Owner:      owner,
-		Auth:       auth.New(token, ownerKey),
-		Profile:    prof,
-		Drops:      drop.New(st),
-		Identities: identity.NewResolver(),
-		Publisher:  publish.New(st, prof, pinner),
+		Owner:       owner,
+		Auth:        auth.New(token, ownerKey),
+		Profile:     prof,
+		Drops:       drop.New(st),
+		Identities:  identity.NewResolver(),
+		Publisher:   publish.New(st, prof, pinner),
+		Switches:    switches,
+		Engine:      engine,
+		OwnerSecret: ownerSecret,
 	})
 	if err != nil {
 		return err
@@ -176,6 +195,10 @@ func runServe(args []string) error {
 	// Retention is a promise, so something has to enforce it on a schedule
 	// rather than only when a request happens to arrive.
 	go runSweeper(ctx, drop.New(st), log)
+
+	// The heartbeat engine. Five minutes is well under the shortest grace
+	// period, so a switch cannot slip past its deadline between ticks.
+	go engine.Run(ctx, 5*time.Minute)
 
 	if err := srv.Serve(ctx); err != nil {
 		return err
@@ -278,4 +301,46 @@ func newPinner(cfg config.Config, log *slog.Logger) backup.Pinner {
 	default:
 		return nil
 	}
+}
+
+// buildNotifier assembles escalation transports from configuration.
+//
+// A switch with no notifier still runs; it simply cannot warn anyone before it
+// fires, which `denly deadhand drill` reports in as many words.
+func buildNotifier(cfg config.Config) deadhand.Notifier {
+	multi := deadhand.MultiNotifier{Webhook: deadhand.NewWebhookNotifier()}
+	if cfg.SMTP.Configured() {
+		multi.Email = deadhand.NewEmailNotifier(deadhand.SMTPConfig{
+			Host:     cfg.SMTP.Host,
+			Port:     cfg.SMTP.Port,
+			Username: cfg.SMTP.Username,
+			Password: cfg.SMTP.Password,
+			From:     cfg.SMTP.From,
+		})
+	}
+	return multi
+}
+
+// buildReleaser assembles the destinations a fired payload is published to.
+//
+// Returns nil when neither is configured, so the engine can say plainly that a
+// release would go nowhere rather than reporting a hollow success.
+func buildReleaser(cfg config.Config) deadhand.Releaser {
+	var (
+		pinner     deadhand.Pinner
+		permanence deadhand.Permanence
+	)
+	switch {
+	case cfg.IPFS.KuboAPI != "":
+		pinner = backup.NewKuboPinner(cfg.IPFS.KuboAPI)
+	case cfg.IPFS.ServiceURL != "" && cfg.IPFS.ServiceToken != "":
+		pinner = backup.NewServicePinner(cfg.IPFS.ServiceURL, cfg.IPFS.ServiceToken)
+	}
+	if cfg.Arweave.Configured() {
+		permanence = deadhand.NewArweaveBundler(cfg.Arweave.Endpoint, cfg.Arweave.Token)
+	}
+	if pinner == nil && permanence == nil {
+		return nil
+	}
+	return deadhand.NewPublisher(pinner, permanence)
 }

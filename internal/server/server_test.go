@@ -14,6 +14,7 @@ import (
 
 	"github.com/fomothy/denly.xyz/internal/auth"
 	"github.com/fomothy/denly.xyz/internal/config"
+	"github.com/fomothy/denly.xyz/internal/deadhand"
 	"github.com/fomothy/denly.xyz/internal/drop"
 	"github.com/fomothy/denly.xyz/internal/identity"
 	"github.com/fomothy/denly.xyz/internal/nostr"
@@ -51,6 +52,10 @@ func newTestServer(t *testing.T) *Server {
 		// No pinner: publishing reports itself unconfigured, which is the
 		// default state of a fresh instance.
 		Publisher: publish.New(st, prof, nil),
+		Switches:  deadhand.NewStore(st),
+		Engine: deadhand.NewEngine(deadhand.NewStore(st), nil, nil,
+			slog.New(slog.NewTextHandler(io.Discard, nil))),
+		OwnerSecret: sk,
 	})
 	if err != nil {
 		t.Fatalf("New: %v", err)

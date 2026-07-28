@@ -28,6 +28,10 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/receive", s.handleRequestReceive)
 	mux.HandleFunc("POST /api/receive/{id}/upload", s.handleUploadToRequest)
 	mux.HandleFunc("GET /api/auth/challenge", s.handleChallenge)
+	// Deadhand's public face: the fired-switch notice, and the sealed payload
+	// a recipient collects. Both are ciphertext this server cannot read.
+	mux.HandleFunc("GET /api/deadhand/notices", s.handleSwitchNotice)
+	mux.HandleFunc("GET /api/deadhand/{id}/payload", s.handleSwitchPayload)
 
 	// Admin. Every route that changes owner-controlled state lives here, behind
 	// the authenticator, so adding an endpoint forces a deliberate choice about
@@ -48,6 +52,15 @@ func (s *Server) routes() http.Handler {
 	admin.HandleFunc("POST /api/admin/identity/verify", s.handleVerifyIdentity)
 	admin.HandleFunc("POST /api/admin/publish", s.handlePublish)
 	admin.HandleFunc("GET /api/admin/publish", s.handlePublishStatus)
+	admin.HandleFunc("GET /api/admin/deadhand", s.handleListSwitches)
+	admin.HandleFunc("POST /api/admin/deadhand", s.handleCreateSwitch)
+	admin.HandleFunc("GET /api/admin/deadhand/{id}", s.handleGetSwitch)
+	admin.HandleFunc("DELETE /api/admin/deadhand/{id}", s.handleDeleteSwitch)
+	admin.HandleFunc("POST /api/admin/deadhand/{id}/arm", s.handleArmSwitch)
+	admin.HandleFunc("POST /api/admin/deadhand/{id}/disarm", s.handleDisarmSwitch)
+	admin.HandleFunc("POST /api/admin/deadhand/{id}/checkin", s.handleCheckIn)
+	admin.HandleFunc("POST /api/admin/deadhand/{id}/drill", s.handleDrill)
+	admin.HandleFunc("POST /api/admin/deadhand/{id}/fire", s.handleFireNow)
 
 	guarded := s.auth.Middleware(admin)
 	for _, prefix := range []string{"/api/admin/", "/api/drops"} {

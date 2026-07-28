@@ -15,6 +15,7 @@ import (
 	"github.com/fomothy/denly.xyz/internal/auth"
 	"github.com/fomothy/denly.xyz/internal/buildinfo"
 	"github.com/fomothy/denly.xyz/internal/config"
+	"github.com/fomothy/denly.xyz/internal/deadhand"
 	"github.com/fomothy/denly.xyz/internal/drop"
 	"github.com/fomothy/denly.xyz/internal/identity"
 	"github.com/fomothy/denly.xyz/internal/nostr"
@@ -47,19 +48,29 @@ type Server struct {
 	drops      *drop.Service
 	identities *identity.Resolver
 	publisher  *publish.Service
+	switches   *deadhand.Store
+	engine     *deadhand.Engine
+
+	// ownerSecret is held only so the API can seal a payload the owner posts
+	// as plaintext. Clients that seal it themselves never involve this, which
+	// is the preferred path.
+	ownerSecret *nostr.PrivateKey
 
 	http *http.Server
 }
 
 // Deps are the collaborators a Server needs beyond its configuration.
 type Deps struct {
-	Owner      *nostr.PublicKey
-	NIP05Names []string
-	Auth       *auth.Authenticator
-	Profile    *profile.Service
-	Drops      *drop.Service
-	Identities *identity.Resolver
-	Publisher  *publish.Service
+	Owner       *nostr.PublicKey
+	NIP05Names  []string
+	Auth        *auth.Authenticator
+	Profile     *profile.Service
+	Drops       *drop.Service
+	Identities  *identity.Resolver
+	Publisher   *publish.Service
+	Switches    *deadhand.Store
+	Engine      *deadhand.Engine
+	OwnerSecret *nostr.PrivateKey
 }
 
 // New builds a Server. Template parsing and asset mounting happen here so that
@@ -75,19 +86,22 @@ func New(cfg config.Config, st *store.Store, log *slog.Logger, deps Deps) (*Serv
 	}
 
 	s := &Server{
-		cfg:        cfg,
-		store:      st,
-		log:        log,
-		templates:  tmpl,
-		static:     static,
-		started:    time.Now(),
-		owner:      deps.Owner,
-		nip05Names: deps.NIP05Names,
-		auth:       deps.Auth,
-		profile:    deps.Profile,
-		drops:      deps.Drops,
-		identities: deps.Identities,
-		publisher:  deps.Publisher,
+		cfg:         cfg,
+		store:       st,
+		log:         log,
+		templates:   tmpl,
+		static:      static,
+		started:     time.Now(),
+		owner:       deps.Owner,
+		nip05Names:  deps.NIP05Names,
+		auth:        deps.Auth,
+		profile:     deps.Profile,
+		drops:       deps.Drops,
+		identities:  deps.Identities,
+		publisher:   deps.Publisher,
+		switches:    deps.Switches,
+		engine:      deps.Engine,
+		ownerSecret: deps.OwnerSecret,
 	}
 
 	s.http = &http.Server{

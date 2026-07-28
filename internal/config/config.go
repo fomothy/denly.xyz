@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -29,6 +31,27 @@ const (
 
 	// EnvIPFSService names a pinning service upload endpoint.
 	EnvIPFSService = "DENLY_IPFS_SERVICE"
+
+	// Escalation mail. Without these a switch still works; it simply cannot
+	// warn anyone before it fires, which `denly deadhand drill` reports in as
+	// many words.
+
+	// EnvSMTPHost names the outbound mail server.
+	EnvSMTPHost = "DENLY_SMTP_HOST"
+	// EnvSMTPPort names its port; 587 when unset.
+	EnvSMTPPort = "DENLY_SMTP_PORT"
+	// EnvSMTPUser names the SMTP username, if authentication is required.
+	EnvSMTPUser = "DENLY_SMTP_USER"
+	// EnvSMTPPass names the SMTP password variable.
+	EnvSMTPPass = "DENLY_SMTP_PASSWORD" //nolint:gosec // G101: an env var name, not a secret
+	// EnvSMTPFrom names the envelope sender.
+	EnvSMTPFrom = "DENLY_SMTP_FROM"
+
+	// EnvArweaveEndpoint names a bundler upload endpoint for pay-once
+	// permanence, so a fired switch outlives this server.
+	EnvArweaveEndpoint = "DENLY_ARWEAVE_ENDPOINT"
+	// EnvArweaveToken names the bundler's bearer token variable.
+	EnvArweaveToken = "DENLY_ARWEAVE_TOKEN" //nolint:gosec // G101: an env var name, not a secret
 
 	// EnvIPFSToken names the bearer token for that service. This is the name
 	// of an environment variable, not a credential — gosec's G101 pattern
@@ -52,7 +75,32 @@ type Config struct {
 	Addr string
 	// IPFS holds the publishing endpoint, if one is configured.
 	IPFS IPFSConfig
+	// SMTP holds escalation mail settings.
+	SMTP SMTPConfig
+	// Arweave holds pay-once permanence settings.
+	Arweave ArweaveConfig
 }
+
+// SMTPConfig describes an outbound mail server for escalation reminders.
+type SMTPConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
+}
+
+// Configured reports whether escalation mail can be sent.
+func (c SMTPConfig) Configured() bool { return c.Host != "" && c.From != "" }
+
+// ArweaveConfig describes a bundler service for permanent storage.
+type ArweaveConfig struct {
+	Endpoint string
+	Token    string
+}
+
+// Configured reports whether permanence is available.
+func (c ArweaveConfig) Configured() bool { return c.Endpoint != "" && c.Token != "" }
 
 // IPFSConfig describes where published content is pinned.
 type IPFSConfig struct {
@@ -82,6 +130,17 @@ func Resolve(flagDataDir, flagAddr string) (Config, error) {
 			KuboAPI:      os.Getenv(EnvIPFSAPI),
 			ServiceURL:   os.Getenv(EnvIPFSService),
 			ServiceToken: os.Getenv(EnvIPFSToken),
+		},
+		SMTP: SMTPConfig{
+			Host:     os.Getenv(EnvSMTPHost),
+			Port:     atoiOrZero(os.Getenv(EnvSMTPPort)),
+			Username: os.Getenv(EnvSMTPUser),
+			Password: os.Getenv(EnvSMTPPass),
+			From:     os.Getenv(EnvSMTPFrom),
+		},
+		Arweave: ArweaveConfig{
+			Endpoint: os.Getenv(EnvArweaveEndpoint),
+			Token:    os.Getenv(EnvArweaveToken),
 		},
 	}, nil
 }
@@ -186,3 +245,13 @@ func firstNonEmpty(values ...string) string {
 
 // ErrNoDataDir is returned when no data directory could be determined.
 var ErrNoDataDir = errors.New("could not determine a data directory")
+
+// atoiOrZero parses a port, treating anything unparseable as unset rather than
+// failing startup over a typo in an optional setting.
+func atoiOrZero(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil || n < 0 || n > 65535 {
+		return 0
+	}
+	return n
+}

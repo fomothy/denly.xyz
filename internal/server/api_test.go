@@ -64,6 +64,15 @@ func TestEveryMutableEndpointRequiresAuth(t *testing.T) {
 		{http.MethodPost, "/api/admin/identity/verify"},
 		{http.MethodPost, "/api/admin/publish"},
 		{http.MethodGet, "/api/admin/publish"},
+		{http.MethodGet, "/api/admin/deadhand"},
+		{http.MethodPost, "/api/admin/deadhand"},
+		{http.MethodGet, "/api/admin/deadhand/abc"},
+		{http.MethodDelete, "/api/admin/deadhand/abc"},
+		{http.MethodPost, "/api/admin/deadhand/abc/arm"},
+		{http.MethodPost, "/api/admin/deadhand/abc/disarm"},
+		{http.MethodPost, "/api/admin/deadhand/abc/checkin"},
+		{http.MethodPost, "/api/admin/deadhand/abc/drill"},
+		{http.MethodPost, "/api/admin/deadhand/abc/fire"},
 	}
 
 	for _, c := range cases {
